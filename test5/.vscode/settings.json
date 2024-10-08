@@ -1,0 +1,28 @@
+{
+    "C_Cpp.default.systemIncludePath": [
+        "${config:vexrobotics.vexcode.Cpp.Sdk.Home}/V5/V5_20240223_11_00_00/vexv5/gcc/include/sys"
+    ],
+    "C_Cpp.default.compilerPath": "/etc/profiles/per-user/nixuser/bin/gcc",
+    "files.associations": {
+        "*.tcc": "cpp",
+        "cctype": "cpp",
+        "clocale": "cpp",
+        "cstddef": "cpp",
+        "cstdint": "cpp",
+        "cstdio": "cpp",
+        "cstdlib": "cpp",
+        "cwchar": "cpp",
+        "cwctype": "cpp",
+        "exception": "cpp",
+        "initializer_list": "cpp",
+        "iosfwd": "cpp",
+        "iostream": "cpp",
+        "istream": "cpp",
+        "limits": "cpp",
+        "new": "cpp",
+        "ostream": "cpp",
+        "streambuf": "cpp",
+        "type_traits": "cpp",
+        "typeinfo": "cpp"
+    }
+}
