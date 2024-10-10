@@ -30,173 +30,144 @@ using code = vision::code;
 // A global instance of brain used for printing to the V5 Brain screen
 brain  Brain;
 
+struct AngledM {
+    vex::motor M;
+    double Angle;
+    double speed_coef;
+    double rot_coef;
+
+    double get_speed_coef(double theta) {
+      double val = cos( ((theta - Angle)/180) * M_PI) * speed_coef;
+      if (fabs(val) < (0.01 * fabs(speed_coef)))
+        val = 0;
+      return val;
+    }
+
+    double get_rot_coef(double omega) {
+      if (omega == 0)
+        omega = 1;
+      return (fabs(omega)/omega) * rot_coef;
+    }
+
+    void set_speed(double speed) {
+      M.spin(forward,speed,percent);
+    }
+};
+
+struct ToggleB {
+  bool output = false;
+  bool lastUpdatePressed = false;
+  
+  bool update(bool button) {
+    static bool lastUpdatePressed = false;
+    if (button && (!lastUpdatePressed))
+      output = !output;
+    lastUpdatePressed = button;
+    return output;
+  }
+  bool getValue() {
+    return output;
+  }
+  bool setValue(bool setVal) {
+    output = setVal;
+    return output;
+  }
+};
+
 // VEXcode device constructors
-motor LeftDriveSmart = motor(PORT1, ratio18_1, false);
-motor RightDriveSmart = motor(PORT2, ratio18_1, true);
+// AngledM NW = {motor(PORT17, ratio18_1, false),  -45,   1};
+// AngledM NE = {motor(PORT18, ratio18_1, false),   45,  -1};
+// AngledM SW = {motor(PORT20, ratio18_1, false), -135,  -1};
+// AngledM SE = {motor(PORT19, ratio18_1, false),  135,   1};
+
+AngledM NW = {motor(PORT17, ratio18_1, false),  -45,   1, -1};
+AngledM NE = {motor(PORT18, ratio18_1, false),   45,  -1, -1};
+AngledM SW = {motor(PORT20, ratio18_1, false), -135,  -1, -1};
+AngledM SE = {motor(PORT19, ratio18_1, false),  135,   1, -1};
+
 // drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 319.19, 295, 40, mm, 1);
 // motor ClawMotor = motor(PORT3, ratio18_1, false);
 // motor ArmMotor = motor(PORT8, ratio18_1, false);
-
-inertial Inertial = inertial(PORT12);
 
 // VEXcode generated functions
 
 controller Controller1 = controller(primary);
 
-
-/**
- * Used to initialize code/tasks/devices added using tools in VEXcode Pro.
- * 
- * This should be called at the start of your int main function.
- */
-
-// class buttonPress (){
-//   public:
-//   private:
-
-// }
-void vexcodeInit( void ) {
-  
-}
-// digital_out dig1 = digital_out( Brain.ThreeWirePort.A );
-
-double getVirtualPosition() {
-    static double virtualPosition = 0;
-    virtualPosition += 5; // Increment the virtual position
-    return virtualPosition;
-}
+inertial Inertial = inertial(PORT10);
 
 int main() {
-  // Initializing Robot Configuration. DO NOT REMOVE!
-  vexcodeInit();
 
-  // while(true) {
-  //   // Get the position of the left joystick (Axis3)
-  //   int leftJoystick = Controller1.Axis4.position();
-
-  //   // Set the motor velocity based on the joystick position
-  //   LeftDriveSmart.spin(forward, leftJoystick, percent);
-
-  //   // Small delay to prevent wasted resources
-  //   vex::task::sleep(20);
-
-  //   // turns cylinder on for one second
-  //   if (Controller1.ButtonL1.pressing())
-  //     dig1.set(false);
-  //   else
-  //     dig1.set(true);
-  //   // wait(10, seconds);
-  // }
-
-
-
-  // PID pid = PID(0.1, 100, -100, 0.1, 0.01, 0.5);
-
-  // double val = 20;
-  // for (int i = 0; i < 100; i++) {
-  //     double inc = pid.calculate(0, val);
-  //     printf("val:% 7.3f inc:% 7.3f\n", val, inc);
-  //     val += inc;
-  // }
-  
-  // Do virtual spring
-  // if (controller.button.pressing()) {motor.spinto(desiredposition, degrees);} 
-
-
-  // double speeds[2] = {0.0, 0.0};  // Initialize speeds array with actual values
-  // double diff[2] = {0.0, 0.0};    // Initialize diff array with actual values
-  // int positions[2] = {0, 0};      // Initialize positions array with actual values
-  // while (true){
-    
-  //   int leftJoystick = Controller1.Axis3.position();
-  //   int rightJoystick = Controller1.Axis2.position();
-  //   positions[0] = leftJoystick;
-  //   positions[1] = rightJoystick;
-  //   int len = (sizeof(speeds)/sizeof(*speeds));
-  //   // int len = 2;
-  //   if (!Controller1.ButtonL1.pressing()){
-  //     for (int i = 0; i < len; i++) {
-  //       int difference = speeds[i] - positions[i];
-  //       speeds[i] -= 0.01 * std::pow(difference,1);
-  //       if (speeds[i] > 100)
-  //         speeds[i] = 100;
-  //       else if (speeds[i] < -100)
-  //         speeds[i] = -100;
-  //     }
-  //   } else {
-  //     for (int i = 0; i < len; i++) {
-  //       speeds[i] = positions[i];
-  //     }
-  //   }
-  //   // speeds[0] += 0.5 * (speeds[0] - positions[0]);
-  //   // speeds[1] += 0.5 * (speeds[1] - positions[1]);
-  //   LeftDriveSmart.spin(forward, speeds[0], percent);
-  //   RightDriveSmart.spin(forward, speeds[1], percent);
-  //   vex::task::sleep(20);
-
-  // }
-
-  // const double kP = 0.05; // Proportional gain
-  // bool updateVirtualPosition = true; // Flag to control virtual position update
-
-  // while(true) {
-  //   // Get the real and virtual positions
-  //   double realPosition = LeftDriveSmart.position(degrees);
-  //   double virtualPosition;
-  //   if (updateVirtualPosition)
-  //     virtualPosition = getVirtualPosition();
-
-  //   // Calculate the difference
-  //   double positionDifference = virtualPosition - realPosition;
-  //   printf("positionDifference:% 7.3f\n", positionDifference);
-
-  //   // Calculate the force (power) to apply
-  //   double motorPower = kP * positionDifference;
-
-  //   // Check if motor power reaches 100%
-  //   if (motorPower >= 100) {
-  //     motorPower = 100;
-  //     updateVirtualPosition = false; // Stop updating virtual position
-  //   } else if (motorPower <= -100) {
-  //     motorPower = -100;
-  //     updateVirtualPosition = false; // Stop updating virtual position
-  //   } else {
-  //     updateVirtualPosition = true; // Continue updating virtual position
-  //   }
-
-  //   // Apply the force to the motor
-  //   LeftDriveSmart.spin(forward, motorPower, percent);
-
-  //   // Print the positions for debugging
-  //   // Brain.Screen.printAt(10, 40, "Real Position: %.2f", realPosition);
-  //   // Brain.Screen.printAt(10, 60, "Virtual Position: %.2f", virtualPosition);
-  //   // Brain.Screen.printAt(10, 80, "Motor Power: %.2f", motorPower);
-
-  //   // Wait for a short duration
-  //   wait(20, msec);
-  // }   
   Inertial.calibrate();
   while(Inertial.isCalibrating()){
     Brain.Screen.clearScreen();
     Brain.Screen.print("Inertial Calibrating");
     wait(50, msec);
   }
-  printf("Silly\n");
-  int tryTurning = 0;
+  double angle_adjust = Inertial.roll();
+
+  double bot_angle = 0;
+  double steering_angle = 0;
+  double speed = 40;
+  AngledM motors[4] = {NW,NE,SW,SE};
+
+  ToggleB driveButton;
+  driveButton.setValue(false);
+
   while (true){
-    double value = - Inertial.yaw();
+  // for (int j = 0; j < 4; j++) {
+    double coefs[4];
+    double max = 0;
 
-    if (value < 0.5)
-      tryTurning = 800;
+    driveButton.update(Controller1.ButtonL1.pressing());
 
-    printf("%7.3f",value);
-    Brain.Screen.print("%7.3f",value);
+    if (Controller1.ButtonR1.pressing())
+      angle_adjust = Inertial.yaw();
 
-    if (tryTurning == 0)
-      LeftDriveSmart.spin(forward, value, percent);
-    wait(20, msec);
+    double cur_angle = Inertial.yaw() - angle_adjust;
 
-    if (tryTurning > 0)
-      tryTurning --;
+    // double omega = (bot_angle + cur_angle);
+    steering_angle = cur_angle;
+    double omega = steering_angle / speed;
+
+    // printf("%7.3f",omega); 
+
+    for (int i = 0; i < 4; i++) {
+      coefs[i] = motors[i].get_speed_coef(bot_angle + steering_angle);
+      // coefs[i] = 1;
+      coefs[i] += motors[i].get_rot_coef(omega) * fabs(omega);
+      if (fabs(coefs[i]) > max) {
+        max = fabs(coefs[i]);
+      }
+    }
+    // max = 1;
+
+    // if (motors[0].get_speed_coef(0) == 0){
+    //   motors[0].set_speed(100);
+    // } else {
+    //   motors[0].set_speed(0);
+    // }
+
+    // Set speed
+    double scalar = 0;
+    if (fabs(max) != 0)
+      scalar = (1 / max) * speed;
+    // double scalar = speed;
+    for (int i = 0; i < 4; i++) {
+      coefs[i] = coefs[i] * scalar;
+      if (!driveButton.getValue()) {
+        motors[i].set_speed(0);
+      } else {
+        motors[i].set_speed(coefs[i]);
+      }
+    }
+
+
+    // printf("%7.3f",max); 
+    // printf("\n%7.3f\n",max);
+    // printf("\n%7.3f\n",steering_angle);
+
+    // steering_angle += 1;
+    // bot_angle += 1.8;
+    wait(10,msec);
   }
 }

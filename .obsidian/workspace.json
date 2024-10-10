@@ -1,0 +1,157 @@
+{
+  "main": {
+    "id": "f049e530e7200048",
+    "type": "split",
+    "children": [
+      {
+        "id": "3cc4f363d8bc6c3c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "7f530f878804a6f6",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "X-Drive/X-Drive Documentation.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "d61fe8807226c952",
+    "type": "split",
+    "children": [
+      {
+        "id": "56fd2ca225756d1e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "26a79fcc5e8da0ee",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "9dee85ced098cca2",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "395a1806f585f7b3",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "85f2b1ca73e43987",
+    "type": "split",
+    "children": [
+      {
+        "id": "5a8e6e576107c983",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "1b586e0c141697b6",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "X-Drive/X-Drive Documentation.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "4450b95054133591",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "X-Drive/X-Drive Documentation.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "f5cef46194d5eacb",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              }
+            }
+          },
+          {
+            "id": "1356bd7204292cbf",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "X-Drive/X-Drive Documentation.md"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false
+    }
+  },
+  "active": "7f530f878804a6f6",
+  "lastOpenFiles": [
+    "README.md",
+    "X-Drive/X-Drive Documentation.md",
+    "X-Drive",
+    "Welcome.md",
+    "create a link.md"
+  ]
+}
