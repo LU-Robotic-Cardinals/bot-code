@@ -1,0 +1,19 @@
+{
+	"extension": {
+		"version": "0.6.0",
+		"json": 2
+	},
+	"project": {
+		"name": "testDane",
+		"description": "",
+		"creationDate": "10/11/2024, 2:23:07 PM",
+		"platform": "V5",
+		"language": "cpp",
+		"slot": 1,
+		"sdkVersion": "V5_20240223_11_00_00",
+		"cpp": {
+			"includePath": [],
+			"printf_float": true
+		}
+	}
+}

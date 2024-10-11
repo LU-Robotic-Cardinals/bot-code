@@ -1,5 +1,5 @@
 ## Goal
-The current goal of the X-Drive project is to simplify the control of X-Drive and X-Adjacent motor arrangements. The math behind calculating the individual motor speed coefficients is not complicated in itself, but it is necessary to build an abstraction layer to prevent unnecessary code repetition between bots, and to aid in quick revision.
+The current goal of the X-Drive project is to simplify the control of X-Drive and X-Adjacent motor arrangements (drives with solely onmi-wheels and orientation-independent strafing). The math behind calculating the individual motor speed coefficients is not complicated in itself, but it is necessary to build an abstraction layer to prevent unnecessary code repetition between bots, and to aid in quick calibration and revision.
 ## Current State
 The current state of the code has the programmer defining a struct for each motor, compiling those motors into an array, and iterating over that array to perform basic actions like fetching coefficients, finding max value, applying motor speed, etc.
 

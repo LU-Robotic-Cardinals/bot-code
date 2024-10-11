@@ -22,6 +22,10 @@
 #include "vex.h"
 #include <cmath>
 #include <string>
+#include <vector>
+
+timer Timer;
+
 
 using namespace vex;
 using signature = vision::signature;
@@ -43,10 +47,10 @@ struct AngledM {
       return val;
     }
 
-    double get_rot_coef(double omega) {
-      if (omega == 0)
-        omega = 1;
-      return (fabs(omega)/omega) * rot_coef;
+    double get_rot_coef(double rot_speed) {
+      if (rot_speed == 0)
+        rot_speed = 1;
+      return (fabs(rot_speed)/rot_speed) * rot_coef;
     }
 
     void set_speed(double speed) {
@@ -74,22 +78,78 @@ struct ToggleB {
   }
 };
 
-// VEXcode device constructors
-// AngledM NW = {motor(PORT17, ratio18_1, false),  -45,   1};
-// AngledM NE = {motor(PORT18, ratio18_1, false),   45,  -1};
-// AngledM SW = {motor(PORT20, ratio18_1, false), -135,  -1};
-// AngledM SE = {motor(PORT19, ratio18_1, false),  135,   1};
+
+class X_Drive {
+private:
+    std::vector<AngledM> motors;
+    double max_motor_speed;
+    double angle_adjust;
+    double linear_speed; //In inches/sec
+    double steering_angle; // In degrees
+    double rot_speed; // In degrees/sec 
+
+public:
+    X_Drive(const std::vector<AngledM>& initialMotors)
+        : motors(initialMotors), max_motor_speed(100), angle_adjust(0), linear_speed(0), steering_angle(0), rot_speed(0) {}
+
+    void addMotor(const AngledM& motor) {
+        motors.push_back(motor);
+    }
+
+    std::vector<AngledM> getMotors() const {
+        return motors;
+    }
+
+    void removeMotorByIndex(size_t index) {
+        if (index < motors.size()) {
+            motors.erase(motors.begin() + index);
+        }
+    }
+
+    void update() {
+        std::vector<double> coefs(motors.size());
+        double max_coef = 0;
+
+        for (size_t i = 0; i < motors.size(); ++i) {
+            coefs[i] = motors[i].get_speed_coef(steering_angle);
+            coefs[i] += motors[i].get_rot_coef(rot_speed) * fabs(rot_speed);
+            if (fabs(coefs[i]) > max_coef) {
+                max_coef = fabs(coefs[i]);
+            }
+        }
+
+        double scalar = 0;
+        if (fabs(max_coef) != 0)
+            scalar = (1 / max_coef) * max_motor_speed;
+
+        for (size_t i = 0; i < motors.size(); ++i) {
+            coefs[i] = coefs[i] * scalar;
+            motors[i].set_speed(coefs[i]);
+        }
+    }
+
+    void set_speed(double new_speed) {
+        max_motor_speed = new_speed;
+    }
+
+    void set_rot_speed(double new_speed) {
+        rot_speed = new_speed;
+    }
+
+    void set_steeringAngle(double new_angle) {
+        steering_angle = new_angle;
+    }
+};
 
 AngledM NW = {motor(PORT17, ratio18_1, false),  -45,   1, -1};
 AngledM NE = {motor(PORT18, ratio18_1, false),   45,  -1, -1};
 AngledM SW = {motor(PORT20, ratio18_1, false), -135,  -1, -1};
 AngledM SE = {motor(PORT19, ratio18_1, false),  135,   1, -1};
 
-// drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 319.19, 295, 40, mm, 1);
-// motor ClawMotor = motor(PORT3, ratio18_1, false);
-// motor ArmMotor = motor(PORT8, ratio18_1, false);
 
-// VEXcode generated functions
+std::vector<AngledM> initialMotors = {NW, NE, SW, SE};
+
+X_Drive X_Group(initialMotors);
 
 controller Controller1 = controller(primary);
 
@@ -103,71 +163,54 @@ int main() {
     Brain.Screen.print("Inertial Calibrating");
     wait(50, msec);
   }
-  double angle_adjust = Inertial.roll();
+  double angle_adjust = Inertial.rotation();
 
-  double bot_angle = 0;
+  // double bot_angle = 0;
   double steering_angle = 0;
-  double speed = 40;
-  AngledM motors[4] = {NW,NE,SW,SE};
+  X_Group.set_steeringAngle(steering_angle);
+  
+
+  // double speed = 40;
 
   ToggleB driveButton;
   driveButton.setValue(false);
+  double find_rot_coef = 10;
+  double last_angle = 0;
+  double cur_angle = Inertial.rotation() - angle_adjust;
+  double drive_speed = 0;
+
+  double omega = 0.01;
+  // X_Group.set_rot_speed(omega);
 
   while (true){
-  // for (int j = 0; j < 4; j++) {
-    double coefs[4];
-    double max = 0;
+    // double diff_time = 2000;
 
-    driveButton.update(Controller1.ButtonL1.pressing());
-
-    if (Controller1.ButtonR1.pressing())
-      angle_adjust = Inertial.yaw();
-
-    double cur_angle = Inertial.yaw() - angle_adjust;
-
-    // double omega = (bot_angle + cur_angle);
-    steering_angle = cur_angle;
-    double omega = steering_angle / speed;
-
-    // printf("%7.3f",omega); 
-
-    for (int i = 0; i < 4; i++) {
-      coefs[i] = motors[i].get_speed_coef(bot_angle + steering_angle);
-      // coefs[i] = 1;
-      coefs[i] += motors[i].get_rot_coef(omega) * fabs(omega);
-      if (fabs(coefs[i]) > max) {
-        max = fabs(coefs[i]);
-      }
-    }
-    // max = 1;
-
-    // if (motors[0].get_speed_coef(0) == 0){
-    //   motors[0].set_speed(100);
-    // } else {
-    //   motors[0].set_speed(0);
+    // double cur_angle = Inertial.rotation() - angle_adjust;
+    // double diff_angle = cur_angle - last_angle;
+    
+    // if (diff_time > 0){
+    //   find_rot_coef = (5.0 * (find_rot_coef/6.0)) + ((omega/diff_angle)/6.0);
+    //   // find_rot_coef = ((omega/diff_angle)/6.0);
     // }
-
-    // Set speed
-    double scalar = 0;
-    if (fabs(max) != 0)
-      scalar = (1 / max) * speed;
-    // double scalar = speed;
-    for (int i = 0; i < 4; i++) {
-      coefs[i] = coefs[i] * scalar;
-      if (!driveButton.getValue()) {
-        motors[i].set_speed(0);
-      } else {
-        motors[i].set_speed(coefs[i]);
-      }
-    }
+    // printf("Here : %7.2f\n",find_rot_coef);
+    // printf("%7.2f\n",omega);
+    // printf("%7.2f\n",diff_angle);
 
 
-    // printf("%7.3f",max); 
-    // printf("\n%7.3f\n",max);
-    // printf("\n%7.3f\n",steering_angle);
+    // X_Group.update();
+    // last_angle = Inertial.rotation() - angle_adjust;
+    // wait(2000,msec);
 
-    // steering_angle += 1;
-    // bot_angle += 1.8;
-    wait(10,msec);
+
+    // steering_angle = Controller1.Axis1.position();
+    // drive_speed = Controller1.Axis3.position();
+    // printf("%7.2f\n",steering_angle);
+    // X_Group.set_speed(drive_speed);
+    // // X_Group.set_steeringAngle(steering_angle);
+    // X_Group.set_rot_speed(steering_angle/ -10.0);
+    // X_Group.update();
+
+
+    wait(20,msec);
   }
 }
