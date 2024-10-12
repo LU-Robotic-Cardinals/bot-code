@@ -23,6 +23,7 @@
 #include <cmath>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 timer Timer;
 
@@ -35,23 +36,67 @@ using code = vision::code;
 brain  Brain;
 
 struct AngledM {
+    // Struct variable definitions
     vex::motor M;
-    double Angle;
-    double speed_coef;
-    double rot_coef;
+    double max_wheel_speed; // Rot speed of wheel at 100% power
+    double wheel_radius; // Wheel radius
+    double wheel_angle; // Angle from arbitrary "front"
+    double dist_from_rot_center; // Radius from center of X to center of wheel
+    double lin_coef; // Special correcting variable for linear motion
+    // double rot_coef; // Special correcting variable for rotational motion
 
     double get_speed_coef(double theta) {
-      double val = cos( ((theta - Angle)/180) * M_PI) * speed_coef;
-      if (fabs(val) < (0.01 * fabs(speed_coef)))
-        val = 0;
+      double val = cos( ((theta - wheel_angle)/180) * M_PI) * lin_coef;
+
+      // Perhaps not needed
+      // if (fabs(val) < (0.01 * fabs(speed_coef)))
+      //   val = 0;
+
       return val;
     }
 
-    double get_rot_coef(double rot_speed) {
-      if (rot_speed == 0)
-        rot_speed = 1;
-      return (fabs(rot_speed)/rot_speed) * rot_coef;
+    // speed is in inches/min
+    // Returns motor speed percentage to achive desired linear speed
+    // given steering angle, wheel radius, and max motor rotations/sec
+    double get_lin_speed(double speed, double theta) {
+      // Spin coeficient based on relative angles
+      double coef = get_speed_coef(theta);
+      // Circumfrence... that's it.
+      double circumference = 2 * M_PI * wheel_radius;
+
+      // This calculates with the following units
+      // in/min / in/rot * coef = rot/min of wheel
+      // rot/min / rot/min = % motor power
+      double speed_percent = ((speed/circumference) * coef) / max_wheel_speed;
+      return speed_percent;
     }
+
+    // This calculates the maximum speed that the
+    // motor can handle
+    double get_max_lin_speed(double theta) {
+      // Dummy speed of 60 in/min and use given angle
+      // Need to have angle because max speed is infinite
+      // at certain angles
+
+      // zero_speed is always zero as far as I can tell
+      // it is just here in case that changes in the future
+      double zero_speed = get_lin_speed(0, theta);
+      double one_speed = get_lin_speed(60, theta);
+      // Delta speed % / delta speed
+      double slope = (one_speed - zero_speed)/60;
+
+      // Since 100% is the max, find how many "slopes" 
+      // it takes to max out the motor
+      double result = 1.0 / slope;
+      return result;
+      
+    }
+
+    // double get_rot_coef(double rot_speed) {
+    //   if (rot_speed == 0)
+    //     rot_speed = 1;
+    //   return (fabs(rot_speed)/rot_speed) * rot_coef;
+    // }
 
     void set_speed(double speed) {
       M.spin(forward,speed,percent);
@@ -82,15 +127,14 @@ struct ToggleB {
 class X_Drive {
 private:
     std::vector<AngledM> motors;
-    double max_motor_speed;
+    double max_motor_speed; // Needs to be set as a percentage 0 <= x <= 1
     double angle_adjust;
-    double linear_speed; //In inches/sec
+    double linear_speed; //In inches/min
     double steering_angle; // In degrees
-    double rot_speed; // In degrees/sec 
 
 public:
     X_Drive(const std::vector<AngledM>& initialMotors)
-        : motors(initialMotors), max_motor_speed(100), angle_adjust(0), linear_speed(0), steering_angle(0), rot_speed(0) {}
+        : motors(initialMotors), max_motor_speed(1), angle_adjust(0), linear_speed(0), steering_angle(0) {}
 
     void addMotor(const AngledM& motor) {
         motors.push_back(motor);
@@ -107,33 +151,33 @@ public:
     }
 
     void update() {
-        std::vector<double> coefs(motors.size());
-        double max_coef = 0;
+      // Percent speed for each motor
+      std::vector<double> p_speeds(motors.size());
 
-        for (size_t i = 0; i < motors.size(); ++i) {
-            coefs[i] = motors[i].get_speed_coef(steering_angle);
-            coefs[i] += motors[i].get_rot_coef(rot_speed) * fabs(rot_speed);
-            if (fabs(coefs[i]) > max_coef) {
-                max_coef = fabs(coefs[i]);
-            }
-        }
+      double max_coef = 0;
+      for (size_t i = 0; i < motors.size(); ++i) {
+          p_speeds[i] = motors[i].get_lin_speed(linear_speed,steering_angle);
+          if (fabs(p_speeds[i]) > max_coef) {
+              max_coef = fabs(p_speeds[i]);
+          }
+      }
 
-        double scalar = 0;
-        if (fabs(max_coef) != 0)
-            scalar = (1 / max_coef) * max_motor_speed;
+      double overspeed_scalar = 1;              //  \/ \/ \/ \/ \/ This is to make sure the motors don't max out
+      if ((fabs(max_coef) > max_motor_speed) || (fabs(max_coef) > 1.0))
+          overspeed_scalar = (1.0 / max_coef) * std::min(max_motor_speed, 1.0);
 
-        for (size_t i = 0; i < motors.size(); ++i) {
-            coefs[i] = coefs[i] * scalar;
-            motors[i].set_speed(coefs[i]);
-        }
+      for (size_t i = 0; i < motors.size(); ++i) {
+          p_speeds[i] = p_speeds[i] * overspeed_scalar;
+          motors[i].set_speed(p_speeds[i]);
+      }
     }
 
-    void set_speed(double new_speed) {
+    void set_max_speed(double new_speed) {
         max_motor_speed = new_speed;
     }
 
-    void set_rot_speed(double new_speed) {
-        rot_speed = new_speed;
+    void set_lin_speed(double new_speed) {
+        linear_speed = new_speed;
     }
 
     void set_steeringAngle(double new_angle) {
@@ -141,66 +185,68 @@ public:
     }
 };
 
-AngledM NW = {motor(PORT17, ratio18_1, false),  -45,   1, -1};
-AngledM NE = {motor(PORT18, ratio18_1, false),   45,  -1, -1};
-AngledM SW = {motor(PORT20, ratio18_1, false), -135,  -1, -1};
-AngledM SE = {motor(PORT19, ratio18_1, false),  135,   1, -1};
+// AngledM NW = {motor(PORT17, ratio18_1, false),  -45,   1, -1};
+// AngledM NE = {motor(PORT18, ratio18_1, false),   45,  -1, -1};
+// AngledM SW = {motor(PORT20, ratio18_1, false), -135,  -1, -1};
+// AngledM SE = {motor(PORT19, ratio18_1, false),  135,   1, -1};
+
+// Wheel radius
+double wheel_rad_size = 4.173 / 2; // In inches
 
 
+// For motor speed, it is written for direct-drive of wheels
+// i.e. 100 for red, 200 for green, and 600 for blue
+// and can be adjusted to account for gear ratios that are 
+// external to the motor
+AngledM NW = {motor(PORT17, ratio18_1, false), wheel_rad_size, 200,  -45, 4,  1};
+AngledM NE = {motor(PORT18, ratio18_1, false), wheel_rad_size, 200,   45, 4, -1};
+AngledM SW = {motor(PORT20, ratio18_1, false), wheel_rad_size, 200, -135, 4, -1};
+AngledM SE = {motor(PORT19, ratio18_1, false), wheel_rad_size, 200,  135, 4,  1};
+
+// Array of motors to keep track of them
+// Not really a need to define the intermediary
+// variables (NW, NE, etc.) but doing so for now
+// to help with debugging.
 std::vector<AngledM> initialMotors = {NW, NE, SW, SE};
 
+// Initialize X_Drive Instance
 X_Drive X_Group(initialMotors);
 
+// Define the controller
 controller Controller1 = controller(primary);
 
+// Define the inertial sensor
 inertial Inertial = inertial(PORT10);
 
 int main() {
-
+  
+  // Calibrate the inertial sensor
   Inertial.calibrate();
   while(Inertial.isCalibrating()){
     Brain.Screen.clearScreen();
     Brain.Screen.print("Inertial Calibrating");
     wait(50, msec);
   }
+  // Get the initial angle to calculate the "zero" angle
   double angle_adjust = Inertial.rotation();
 
-  // double bot_angle = 0;
   double steering_angle = 0;
   X_Group.set_steeringAngle(steering_angle);
   
-
-  // double speed = 40;
-
-  ToggleB driveButton;
-  driveButton.setValue(false);
-  double find_rot_coef = 10;
-  double last_angle = 0;
-  double cur_angle = Inertial.rotation() - angle_adjust;
+  // ToggleB driveButton;
+  // driveButton.setValue(false);
+  // double cur_angle = Inertial.rotation() - angle_adjust;
   double drive_speed = 0;
 
-  double omega = 0.01;
-  // X_Group.set_rot_speed(omega);
+  // double drive_percent = NW.get_speed(200*2*M_PI*4.17/2, -45);
+  // double max_speed_found = NW.get_max_lin_speed(-45);
+  // printf("%7.2f\n", drive_percent);
+  // printf("%7.2f\n", max_speed_found);
+  // printf("%7.2f\n", 200*2*M_PI*4.17/2);
+  // printf("Silly\n");
 
   while (true){
-    // double diff_time = 2000;
-
-    // double cur_angle = Inertial.rotation() - angle_adjust;
-    // double diff_angle = cur_angle - last_angle;
     
-    // if (diff_time > 0){
-    //   find_rot_coef = (5.0 * (find_rot_coef/6.0)) + ((omega/diff_angle)/6.0);
-    //   // find_rot_coef = ((omega/diff_angle)/6.0);
-    // }
-    // printf("Here : %7.2f\n",find_rot_coef);
-    // printf("%7.2f\n",omega);
-    // printf("%7.2f\n",diff_angle);
-
-
-    // X_Group.update();
-    // last_angle = Inertial.rotation() - angle_adjust;
-    // wait(2000,msec);
-
 
     // steering_angle = Controller1.Axis1.position();
     // drive_speed = Controller1.Axis3.position();
