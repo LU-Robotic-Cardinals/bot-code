@@ -10,3 +10,26 @@ The programmer will be able to supply many ways of dictating where the robot sho
 ## Ramblings
 ## To-do
 ## Ideas
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

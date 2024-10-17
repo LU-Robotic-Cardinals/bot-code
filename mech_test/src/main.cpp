@@ -322,8 +322,8 @@ int main() {
 
   // printf("%7.2f\n",silly);
   // std::vector<double> speeds_list = {0.1,0.2,0.5,1.0};
-  std::vector<double> speeds_list = {0.5,1.0};
-  double times_list[4] = {0};
+  // std::vector<double> speeds_list = {0.5,1.0};
+  // double times_list[4] = {0};
   // while (true){
   //   // double angle_adjust = Inertial.rotation();
   //   // X_Group.set_rot_speed(angle_adjust*5);
@@ -338,41 +338,41 @@ int main() {
 
   //   wait(20,msec);
   // }
-  double avg = 0;
-  int revs = 2;
-  printf("\n\n\n");
-  for (int i = 0; i < speeds_list.size(); i++){
-    // X_Group.set_rot_speed(speeds_list[i]);
-    // X_Group.update();
-    NW.set_speed(speeds_list[i]);
-    NE.set_speed(speeds_list[i]);
-    SW.set_speed(speeds_list[i]);
-    SE.set_speed(speeds_list[i]);
-    
-    // while
-    wait(500, msec);
-    double rot_base = Inertial.rotation();
-    times_list[i] = Timer.time() / 1.0;
-    while (fabs(Inertial.rotation() - rot_base)<(360*revs)) {
-      wait(5,msec);
-    }
-    times_list[i] = (Timer.time() - times_list[i])/revs;
-    // 1/ ((200/60)*speeds_list[i]*wheel_rad_size/bot_radius) = times_list[i]/1000
-    
-    // printf("%7.2f\n",times_list[i]/1000);
-    double print_num = (1000*(200/60)*speeds_list[i]*wheel_rad_size)/(60 * times_list[i]);
-    printf("%7.5f\n",1/print_num);
-    // avg += times_list[i]*speeds_list[i]/3;
-  }
-  // printf("Avg: %7.2f\n",avg);
-  // printf("Deviations\n");
-
+  // double avg = 0;
+  // int revs = 2;
+  // printf("\n\n\n");
   // for (int i = 0; i < speeds_list.size(); i++){
-  //   printf("%7.2f\n",times_list[i]*speeds_list[i]/avg);
+  //   // X_Group.set_rot_speed(speeds_list[i]);
+  //   // X_Group.update();
+  //   NW.set_speed(speeds_list[i]);
+  //   NE.set_speed(speeds_list[i]);
+  //   SW.set_speed(speeds_list[i]);
+  //   SE.set_speed(speeds_list[i]);
+    
+  //   // while
+  //   wait(500, msec);
+  //   double rot_base = Inertial.rotation();
+  //   times_list[i] = Timer.time() / 1.0;
+  //   while (fabs(Inertial.rotation() - rot_base)<(360*revs)) {
+  //     wait(5,msec);
+  //   }
+  //   times_list[i] = (Timer.time() - times_list[i])/revs;
+  //   // 1/ ((200/60)*speeds_list[i]*wheel_rad_size/bot_radius) = times_list[i]/1000
+    
+  //   // printf("%7.2f\n",times_list[i]/1000);
+  //   double print_num = (1000*(200/60)*speeds_list[i]*wheel_rad_size)/(60 * times_list[i]);
+  //   printf("%7.5f\n",1/print_num);
+  //   // avg += times_list[i]*speeds_list[i]/3;
   // }
-  X_Group.set_rot_speed(0);
-  X_Group.update();
-  // while (true){
-  //   printf("%7.2f\n",Inertial.rotation());
-  // }
+  // // printf("Avg: %7.2f\n",avg);
+  // // printf("Deviations\n");
+
+  // // for (int i = 0; i < speeds_list.size(); i++){
+  // //   printf("%7.2f\n",times_list[i]*speeds_list[i]/avg);
+  // // }
+  // X_Group.set_rot_speed(0);
+  // X_Group.update();
+  // // while (true){
+  // //   printf("%7.2f\n",Inertial.rotation());
+  // // }
 }
