@@ -277,18 +277,18 @@ double bot_radius = 12.4417/2;
 double motor_reference = 0; // Degrees from brain
 
 std::vector<AngledM> initialMotors = {
-{motor(PORT19, ratio18_1, false), 200, wheel_rad_size,   45, bot_radius,  1, -1}, // NW Top
-{motor(PORT20, ratio18_1, false), 200, wheel_rad_size,   45, bot_radius, -1, -1}, // NW Dow
+{motor(PORT19, ratio18_1, false), 200, wheel_rad_size,   45, bot_radius, -1,  1}, // NW Top
+{motor(PORT20, ratio18_1, false), 200, wheel_rad_size,   45, bot_radius, 1, -1}, // NW Dow
 
-{motor(PORT2,  ratio18_1, false), 200, wheel_rad_size,  -45, bot_radius, -1, -1}, // NE Top
-{motor(PORT1,  ratio18_1, false), 200, wheel_rad_size,  -45, bot_radius,  1, -1}, // NE Dow
+{motor(PORT2,  ratio18_1, false), 200, wheel_rad_size,  -45, bot_radius,  1,  1}, // NE Top
+{motor(PORT1,  ratio18_1, false), 200, wheel_rad_size,  -45, bot_radius, -1, -1}, // NE Dow
 
-{motor(PORT10, ratio18_1, false), 200, wheel_rad_size,  135, bot_radius,  1, -1}, // SW Top
+{motor(PORT10, ratio18_1, false), 200, wheel_rad_size,  135, bot_radius,  1,  1}, // SW Top
 {motor(PORT9,  ratio18_1, false), 200, wheel_rad_size,  135, bot_radius, -1, -1}, // SW Dow
 
-{motor(PORT11, ratio18_1, false), 200, wheel_rad_size, -135, bot_radius, -1, -1}, //SE Top
+{motor(PORT11, ratio18_1, false), 200, wheel_rad_size, -135, bot_radius, -1,  1}, //SE Top
 {motor(PORT12, ratio18_1, false), 200, wheel_rad_size, -135, bot_radius,  1, -1}  //SE Dow
-}
+};
 
 // Array of motors to keep track of them
 // Not really a need to define the intermediary
@@ -346,8 +346,8 @@ int main() {
     steering_angle = Controller1.Axis1.position();
     drive_speed = Controller1.Axis3.position();
     printf("%7.2f\n",steering_angle);
-    X_Group.set_speed(drive_speed);
-    X_Group.set_lin_speed(drive_speed * 2500/100);
+    // X_Group.set_speed(drive_speed);
+    X_Group.set_lin_speed(drive_speed * 10000/100);
     X_Group.set_rot_speed(steering_angle * -180 / 100);
     X_Group.update();
 
