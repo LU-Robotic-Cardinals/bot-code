@@ -236,6 +236,38 @@ public:
       // printf("\n");
     }
 
+    double get_max_lin_speed(double angle) {
+      // This is the X_Drive class implimentation of the
+      // AngledM get_max_lin_speed function for every motor
+      // in the group.
+      double max_speed = 0;
+      for (size_t i = 0; i < motors.size(); ++i) {
+        // Find the slowest one since that will imit all the others
+        // max_speed == 0  is because the max_speed is initialized to zero
+        // and not some massive number. Without it, get_max_lin_speed would
+        // not give the right number.
+        if (motors[i].get_max_lin_speed(angle) < max_speed || max_speed == 0)
+          max_speed = motors[i].get_max_lin_speed(angle);
+      }
+      return max_speed;
+    }
+
+    double get_max_rot_speed() {
+      // This is the X_Drive class implimentation of the
+      // AngledM get_max_rot_speed function for every motor
+      // in the group.
+      double max_speed = 0;
+      for (size_t i = 0; i < motors.size(); ++i) {
+        // Find the slowest one since that will imit all the others
+        // (max_speed == 0)  is because the max_speed is initialized to zero
+        // and not some massive number. Without it, get_max_rot_speed would
+        // not give the right number.
+        if (motors[i].get_max_rot_speed() < max_speed || max_speed == 0)
+          max_speed = motors[i].get_max_rot_speed();
+      }
+      return max_speed;
+    }
+
     void set_max_speed(double new_speed) {
         max_motor_speed = new_speed;
     }
@@ -260,9 +292,9 @@ public:
 // Wheel radius
 // Circumfrence was aprox. 13 + 1/16 inches
 // which is 4.157 but 13 + 1/8 is 4.177
-double wheel_rad_size = 4.1573 / 2; // In inches
+double wheel_rad_size = 3.25 / 2.0; // In inches
 // double bot_radius = 4;
-double bot_radius = 12.4417/2;
+double bot_radius = 14/2.0;
 
 
 // For motor speed, it is written for direct-drive of wheels
@@ -275,19 +307,20 @@ double bot_radius = 12.4417/2;
 // AngledM SE = {motor(PORT19, ratio18_1, false), 200, wheel_rad_size,  135, bot_radius,  1, -1};
 
 double motor_reference = 0; // Degrees from brain
+double wheel_speed = 200 * 5 / 3;
 
 std::vector<AngledM> initialMotors = {
-{motor(PORT19, ratio18_1, false), 200, wheel_rad_size,   45, bot_radius, -1,  1}, // NW Top
-{motor(PORT20, ratio18_1, false), 200, wheel_rad_size,   45, bot_radius, 1, -1}, // NW Dow
+{motor(PORT19, ratio18_1, false), wheel_speed, wheel_rad_size,   45, bot_radius, -1,  1}, // NW Top
+{motor(PORT20, ratio18_1, false), wheel_speed, wheel_rad_size,   45, bot_radius,  1, -1}, // NW Dow
 
-{motor(PORT2,  ratio18_1, false), 200, wheel_rad_size,  -45, bot_radius,  1,  1}, // NE Top
-{motor(PORT1,  ratio18_1, false), 200, wheel_rad_size,  -45, bot_radius, -1, -1}, // NE Dow
+{motor(PORT2,  ratio18_1, false), wheel_speed, wheel_rad_size,  -45, bot_radius,  1,  1}, // NE Top
+{motor(PORT1,  ratio18_1, false), wheel_speed, wheel_rad_size,  -45, bot_radius, -1, -1}, // NE Dow
 
-{motor(PORT10, ratio18_1, false), 200, wheel_rad_size,  135, bot_radius,  1,  1}, // SW Top
-{motor(PORT9,  ratio18_1, false), 200, wheel_rad_size,  135, bot_radius, -1, -1}, // SW Dow
+{motor(PORT10, ratio18_1, false), wheel_speed, wheel_rad_size,  135, bot_radius,  1,  1}, // SW Top
+{motor(PORT9,  ratio18_1, false), wheel_speed, wheel_rad_size,  135, bot_radius, -1, -1}, // SW Dow
 
-{motor(PORT11, ratio18_1, false), 200, wheel_rad_size, -135, bot_radius, -1,  1}, //SE Top
-{motor(PORT12, ratio18_1, false), 200, wheel_rad_size, -135, bot_radius,  1, -1}  //SE Dow
+{motor(PORT11, ratio18_1, false), wheel_speed, wheel_rad_size, -135, bot_radius, -1,  1}, //SE Top
+{motor(PORT12, ratio18_1, false), wheel_speed, wheel_rad_size, -135, bot_radius,  1, -1}  //SE Dow
 };
 
 // Array of motors to keep track of them
@@ -345,10 +378,10 @@ int main() {
     X_Group.set_rot_speed(angle_adjust*5);
     steering_angle = Controller1.Axis1.position();
     drive_speed = Controller1.Axis3.position();
-    printf("%7.2f\n",steering_angle);
+    printf("%7.2f\n",initialMotors[0].get_max_lin_speed(0));
     // X_Group.set_speed(drive_speed);
-    X_Group.set_lin_speed(drive_speed * 10000/100);
-    X_Group.set_rot_speed(steering_angle * -180 / 100);
+    X_Group.set_lin_speed(drive_speed * X_Group.get_max_lin_speed(0)/100);
+    X_Group.set_rot_speed(steering_angle * -X_Group.get_max_rot_speed() / 100 / 2);
     X_Group.update();
 
 
