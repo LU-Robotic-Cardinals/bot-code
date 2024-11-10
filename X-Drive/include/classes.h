@@ -1,10 +1,14 @@
 #include "vex.h"
-#include "help_funcs.cpp"
 #include <cmath>
 #include <string>
 #include <vector>
-#include <algorithm>
+// #include <algorithm>
 #include <iostream>
+#include "pidcontroller.h"
+
+#ifndef CLASSES_H
+#define CLASSES_H
+
 
 bool closetonum(double value = 0, double target = 0, double error = 0.001) {
     if (fabs(value - target) < fabs(error)) {
@@ -14,14 +18,76 @@ bool closetonum(double value = 0, double target = 0, double error = 0.001) {
 }
 
 struct AngledM {
+  private:
     // Struct variable definitions
     vex::motor motor;
+    // In rot/min
+    double max_motor_speed; // Rot speed of motor at 100% power
     double max_wheel_speed; // Rot speed of wheel at 100% power
+    // Inches
     double wheel_radius; // Wheel radius
     double wheel_angle; // Angle from arbitrary "front"
-    double dist_from_rot_center; // Radius from center of X to middle of wheel contact patch
+    double dist_rot_center; // Radius from center of X to middle of wheel contact patch
     double lin_coef; // Special correcting variable for linear motion
     double rot_coef; // Special correcting variable for rotational motion
+
+    // For PID stuff
+    PIDController pid_obj;
+    timer Time; // Time object
+    double current_speed = 0; // Current speed, updated on set_speed()
+    double current_time = Time.time(); // Global deffinition of current time
+    double last_time = current_time; // Time on last update
+    double correct_position = 0; // Cummulative position for motor to achive
+
+
+  public:
+    // This just sets the speed of the motor
+    // to a percentage value
+    void set_speed(double new_speed) {
+      // std::cout << new_speed << "\n";
+      // new_speed = 1;
+
+      // motor.spin(forward,new_speed*100,percent);
+      // Delta time
+      double dt = (Time.time() - last_time)/1000.0;
+
+      // Average speed since last update
+      // avg_power * rot/min * 1min/60sec = rot/sec
+      double avg_speed = ((current_speed + new_speed)/2.0) * (max_motor_speed / 60.0);
+
+      // Integrate to get delta rot
+      // actual rot made since last update
+      double dx = avg_speed * dt;
+
+      // Old correct pos + delta accrued since last update
+      // In rotations
+      correct_position += dx;
+
+      // Position error
+      // correct_rots - actual_rots
+      double error = (correct_position - motor.position(degrees) / 360.0);
+
+      // Calculate needed speed
+      double voltage = pid_obj.calculate(error);
+      
+      motor.spin(forward,voltage*100,percent);
+
+      // Update current_speed to be current
+      current_speed = new_speed;
+      last_time = Time.time();
+    }
+
+    AngledM(vex::motor Motor_Obj, double maximum_motor_speed = 200,
+    double maximum_wheel_speed = 200, double wheel_radius_size = 1, 
+    double wheel_center_angle = 0, double wheel_bot_radius = 1, 
+    double linear_coefficient = 1, double rotation_coefficient = 1, 
+    PIDController pid_system = PIDController(1,0,10)) :
+
+    motor(Motor_Obj), max_motor_speed(maximum_motor_speed),
+    max_wheel_speed(maximum_wheel_speed), wheel_radius(wheel_radius_size),
+    wheel_angle(wheel_center_angle), dist_rot_center(wheel_bot_radius), 
+    lin_coef(linear_coefficient), rot_coef(rotation_coefficient),
+    pid_obj(pid_system) {}
 
     double get_lin_speed_coef(double theta) {
       double val = cos( ((theta - wheel_angle)/180.0) * M_PI) * lin_coef;
@@ -75,6 +141,7 @@ struct AngledM {
     }
 
     double get_rot_speed_coef(double rot_speed) {
+      // You can't divide by zero dummy
       if (rot_speed == 0)
         rot_speed = 1;
       return (fabs(rot_speed)/rot_speed) * rot_coef;
@@ -98,7 +165,7 @@ struct AngledM {
       // deg/sec * rad/deg * dist/rad = dist/sec
       // dist/sec * 60sec/min * 1 min = dist in one minute
 
-      double arc_length = fabs(rot_speed) * (M_PI / 180.0) * dist_from_rot_center;
+      double arc_length = fabs(rot_speed) * (M_PI / 180.0) * dist_rot_center;
 
       // Revs that the wheel has to perform per minute
       // X 60 for sec to minute conversion
@@ -130,12 +197,6 @@ struct AngledM {
       return fabs(result);
       
     }
-
-    // This just sets the speed of the motor
-    // to a percentage value
-    void set_speed(double speed) {
-      motor.spin(forward,speed*100,percent);
-    }
 };
 
 class ToggleB {
@@ -165,8 +226,6 @@ class ToggleB {
   }
 };
 
-
-
 class SingleB {
   public:
   // Simple toggle button stuct
@@ -191,7 +250,6 @@ class SingleB {
     return output;
   }
 };
-
 
 class X_Drive {
 private:
@@ -231,12 +289,13 @@ public:
               max_coef = fabs(p_speeds[i]);
           }
       }
+      // std::cout << max_coef << "\n";
 
       double overspeed_scalar = 1;              //  \/ \/ \/ \/ \/ This is to make sure the motors don't max out
       if ((fabs(max_coef) > max_motor_speed) || (fabs(max_coef) > 1.0))
           overspeed_scalar = (1.0 / max_coef) * std::min(max_motor_speed, 1.0);
 
-      overspeed_scalar = 1;
+      // overspeed_scalar = 1;
 
       for (size_t i = 0; i < motors.size(); ++i) {
           p_speeds[i] = p_speeds[i] * overspeed_scalar;
@@ -294,43 +353,6 @@ public:
     }
 };
 
-
-class PIDController {
-public:
-    PIDController(double P, double I, double D) : Kp(P), Ki(I), Kd(D), integral(0.0), previous_error(0.0) {
-      last_time = Time.time();
-    }
-
-    double calculate(double error) {
-        // The divide by 10 is to keep things under controll
-        double dt = (Time.time() - last_time)/10; 
-        last_time = Time.time();
-        double proportional = Kp * error;
-        integral += Ki * error * dt;
-        double derivative = Kd * (error - previous_error) / dt;
-        previous_error = error;
-
-        return proportional + integral + derivative;
-    }
-    
-    std::vector<double> values(){
-      double dt = (Time.time() - last_time)/10;
-      double prop = Kp * previous_error;
-      double inte = Ki * previous_error * dt;
-      double deri = Kd * (previous_error - previous_error) / dt;
-      std::vector<double> array = {prop, inte, deri, previous_error};
-      return array;
-    }
-
-private:
-    double Kp, Ki, Kd;
-    double integral, previous_error;
-    double last_time;
-    timer Time;
-};
-
-
-
 class RollingAverage {
 public:
     RollingAverage(int window_size) : window_size_(window_size), sum_(0.0), window_(window_size, 0.0) {}
@@ -351,7 +373,6 @@ private:
     std::vector<double> window_;
     int index_ = 0;
 };
-
 
 struct RemoveGravity {
   public:
@@ -466,3 +487,8 @@ struct InertialPosition {
     RemoveGravity null_accel;
 
 };
+
+
+// Function declaration and class definitions
+
+#endif // CLASSES_H

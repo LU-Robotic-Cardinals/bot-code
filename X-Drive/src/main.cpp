@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include "classes.cpp"
+#include "classes.h"
 // #include "helper.cpp"
 #include <iostream>
 
@@ -47,20 +47,28 @@ double wheel_rad_size = 3.25 / 2.0; // In inches
 double bot_radius = 20/2.0;
 
 double motor_reference = 0; // Degrees from brain
+double motor_speed = 200;
 double wheel_speed = 200 * 5 / 3;
 
+double Kp = 1;
+double Ki = 0;
+double Kd = 0;
+double Mp = 1;
+double Mi = 0;
+double Md = 0;
+
 std::vector<AngledM> initialMotors = {
-{motor(PORT19, ratio18_1, false), wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius, -1,  1}, // NW Top
-{motor(PORT20, ratio18_1, false), wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius,  1, -1}, // NW Dow
+// {motor(PORT19, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius, -1,  1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // NW Top
+{motor(PORT20, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // NW Dow
 
-{motor(PORT2,  ratio18_1, false), wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius,  1,  1}, // NE Top
-{motor(PORT1,  ratio18_1, false), wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius, -1, -1}, // NE Dow
+// {motor(PORT2,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius,  1,  1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // NE Top
+{motor(PORT1,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius, -1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // NE Dow
 
-{motor(PORT10, ratio18_1, false), wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius,  1,  1}, // SW Top
-{motor(PORT9,  ratio18_1, false), wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius, -1, -1}, // SW Dow
+// {motor(PORT10, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius,  1,  1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // SW Top
+{motor(PORT9,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius, -1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // SW Dow
 
-{motor(PORT11, ratio18_1, false), wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius, -1,  1}, //SE Top
-{motor(PORT12, ratio18_1, false), wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius,  1, -1}  //SE Dow
+// {motor(PORT11, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius, -1,  1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, //SE Top
+{motor(PORT12, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}  //SE Dow
 };
 
 // Initialize X_Drive Instance
@@ -74,6 +82,8 @@ inertial Inertial = inertial(PORT13);
 
 // Define the front distance sensor
 distance Distance1 = distance(PORT4);
+
+// rotation Rot_Sensor = rotation(PORT7);
 
 int main() {
   
@@ -111,7 +121,7 @@ int main() {
   Brain.Screen.clearScreen();
   Brain.Screen.print(X_Group.get_max_rot_speed());
   
-  while (true) {
+  while (ESTOP.getValue()) {
     long last_time = Timer.time();
 
     ESTOP.update((Controller1.ButtonR1.pressing() || Stop.value()));
@@ -128,7 +138,7 @@ int main() {
     Clamp_Actuator.set(Clamp.getValue());
     // printf("%7.2f\n",(Timer.time() - last_time)/10000.0);
     // last_time = Timer.time();
-    if(ESTOP.getValue()) {
+    if(true) {
       // Set all speeds to zero and they can be overwritten
       X_Group.set_rot_speed(0);
       X_Group.set_lin_speed(0);    
@@ -151,7 +161,8 @@ int main() {
         X_Group.set_steeringAngle(Inertial.rotation() - angle_adjust + angle + current_angle);
         // std::cout << "Angle : " << angle << "\n";
         // std::cout << "Speed : " << abs_speed << "\n";
-        std::cout << initialMotors[0].motor.position(degrees);
+        // std::cout << initialMotors[0].motor.position(degrees) << "\n";
+        // std::cout << Rot_Sensor.position(degrees) << "\n";
       // }
     } else {
      X_Group.set_rot_speed(0); 
@@ -159,8 +170,8 @@ int main() {
     }
     X_Group.update();
 
-    // std::cout << Timer.time() - last_time << "\n";
+    // last_time = Timer.time();
     wait(20,msec);
-
+    // std::cout << (Timer.time() - last_time)/1000.0 << "\n";
   }
 }
