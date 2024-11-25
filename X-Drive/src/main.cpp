@@ -59,17 +59,25 @@ double Md = 0;
 
 std::vector<AngledM> initialMotors = {
 // {motor(PORT19, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius, -1,  1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // NW Top
-{motor(PORT20, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // NW Dow
+// {motor(PORT20, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // NW Dow
 
 // {motor(PORT2,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius,  1,  1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // NE Top
-{motor(PORT1,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius, -1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // NE Dow
+// {motor(PORT1,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius, -1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // NE Dow
 
 // {motor(PORT10, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius,  1,  1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // SW Top
-{motor(PORT9,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius, -1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // SW Dow
+// {motor(PORT9,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius, -1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // SW Dow
 
 // {motor(PORT11, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius, -1,  1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, //SE Top
-{motor(PORT12, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}  //SE Dow
+// {motor(PORT12, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}  //SE Dow
 };
+
+// std::vector<AngledM> initialMotors_2 = {
+// {motor(PORT3, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  45, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)},  
+// {motor(PORT4, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  45, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)},
+// {motor(PORT5, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  45, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, 
+// {motor(PORT6, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  45, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, 
+// {motor(PORT7, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  45, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)} 
+// };
 
 // Initialize X_Drive Instance
 X_Drive X_Group(initialMotors);
@@ -79,11 +87,6 @@ controller Controller1 = controller(primary);
 
 // Define the inertial sensor
 inertial Inertial = inertial(PORT13);
-
-// Define the front distance sensor
-distance Distance1 = distance(PORT4);
-
-// rotation Rot_Sensor = rotation(PORT7);
 
 int main() {
   
@@ -98,16 +101,13 @@ int main() {
   Brain.Screen.clearScreen();
   // Get the initial angle to calculate the "zero" angle
   double angle_adjust = Inertial.rotation();
-  
-  // ToggleB driveButton;
-  // driveButton.setValue(false);
-  // double cur_angle = Inertial.rotation() - angle_adjust;
+
   PIDController spinPID(3,0, 4);
   PIDController  linPID(2,0, 2);
   ToggleB ESTOP;
   ToggleB Clamp;
   ESTOP.setValue(true);
-  // Clamp.setValue(false);
+  Clamp.setValue(false);
   SingleB rotateFrontLeft;
   SingleB rotateFrontRight;
 
@@ -120,13 +120,20 @@ int main() {
   double current_angle = 0;
   Brain.Screen.clearScreen();
   Brain.Screen.print(X_Group.get_max_rot_speed());
-  
-  while (ESTOP.getValue()) {
-    long last_time = Timer.time();
+  Brain.Screen.clearScreen();
 
+
+  GenerateBoxes box_generator;
+  ShowBoxes box_shower;
+  // std::cout << box_generator.generate(2,2)[0].br_x << "\n";
+  box_shower.show(Brain, box_generator.generate(3,2));
+
+  
+  
+  while (true) {
+    // Update ESTOP and Clamp buttons with physical button states
     ESTOP.update((Controller1.ButtonR1.pressing() || Stop.value()));
     Clamp.update(Controller1.ButtonL1.pressing());
-    // Clamp.update(true);
 
     if (rotateFrontLeft.update(Controller1.ButtonL2.pressing()))
       current_angle += 90;
@@ -134,44 +141,23 @@ int main() {
     if (rotateFrontRight.update(Controller1.ButtonR2.pressing()))
       current_angle -= 90;
     
-    // printf("%7.2f\n",X_Group.get_max_rot_speed());
     Clamp_Actuator.set(Clamp.getValue());
-    // printf("%7.2f\n",(Timer.time() - last_time)/10000.0);
-    // last_time = Timer.time();
-    if(true) {
-      // Set all speeds to zero and they can be overwritten
-      X_Group.set_rot_speed(0);
-      X_Group.set_lin_speed(0);    
-      // printf("Pitch: %7.2f   Roll: %7.2f   Yaw: %7.2f \n",Inertial.pitch(),Inertial.roll(),Inertial.yaw());
-      double speed1 = Controller1.Axis3.position();
-      double speed2 = Controller1.Axis4.position();
+    if(ESTOP.getValue()) {      
+      double speed1 = Controller1.Axis4.position();
+      double speed2 = -Controller1.Axis3.position();
       double angle = atan2(speed1,speed2)/M_PI*180.0;
       double spin = - Controller1.Axis1.position()/100.0;
 
       double abs_speed = pow(pow(speed1,2)+pow(speed2,2),0.5);
-
-      // double spin = spinPID.calculate(Inertial.rotation() - angle_adjust);
-      // double dist = linPID.calculate(Distance1.objectDistance(inches)-12);
-      // X_Group.set_rot_speed(spin*1);
-      // printf("%7.2f\n",spinPID.values()[0]);
-      // if (closetonum(spinPID.values()[0]) && closetonum(spinPID.values()[2])) {
-        
-        X_Group.set_rot_speed(spin*X_Group.get_max_rot_speed());
-        X_Group.set_lin_speed(abs_speed * 100);
-        X_Group.set_steeringAngle(Inertial.rotation() - angle_adjust + angle + current_angle);
-        // std::cout << "Angle : " << angle << "\n";
-        // std::cout << "Speed : " << abs_speed << "\n";
-        // std::cout << initialMotors[0].motor.position(degrees) << "\n";
-        // std::cout << Rot_Sensor.position(degrees) << "\n";
-      // }
+      X_Group.set_rot_speed(spin*X_Group.get_max_rot_speed());
+      X_Group.set_lin_speed(abs_speed * 100);
+      X_Group.set_steeringAngle(Inertial.rotation() - angle_adjust + angle + current_angle);
     } else {
      X_Group.set_rot_speed(0); 
      X_Group.set_lin_speed(0);
     }
     X_Group.update();
 
-    // last_time = Timer.time();
     wait(20,msec);
-    // std::cout << (Timer.time() - last_time)/1000.0 << "\n";
   }
 }
