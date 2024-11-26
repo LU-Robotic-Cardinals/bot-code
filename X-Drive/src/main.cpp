@@ -27,6 +27,7 @@
 #include "classes.h"
 // #include "helper.cpp"
 #include <iostream>
+#include "odometry.h"
 
 timer Timer;
 
@@ -58,17 +59,17 @@ double Mi = 0;
 double Md = 0;
 
 std::vector<AngledM> initialMotors = {
-// {motor(PORT19, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius, -1,  1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // NW Top
-// {motor(PORT20, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // NW Dow
+{motor(PORT19, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius, -1,  1}, // NW Top
+{motor(PORT20, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius,  1, -1}, // NW Dow
 
-// {motor(PORT2,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius,  1,  1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // NE Top
-// {motor(PORT1,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius, -1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // NE Dow
+{motor(PORT2,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius,  1,  1}, // NE Top
+{motor(PORT1,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius, -1, -1}, // NE Dow
 
-// {motor(PORT10, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius,  1,  1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // SW Top
-// {motor(PORT9,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius, -1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, // SW Dow
+{motor(PORT10, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius,  1,  1}, // SW Top
+{motor(PORT9,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius, -1, -1}, // SW Dow
 
-// {motor(PORT11, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius, -1,  1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, //SE Top
-// {motor(PORT12, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}  //SE Dow
+{motor(PORT11, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius, -1,  1}, //SE Top
+{motor(PORT12, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius,  1, -1}  //SE Dow
 };
 
 // std::vector<AngledM> initialMotors_2 = {
@@ -97,13 +98,11 @@ int main() {
   while(Inertial.isCalibrating()){
     wait(50, msec);
   }
-  
   Brain.Screen.clearScreen();
+
   // Get the initial angle to calculate the "zero" angle
   double angle_adjust = Inertial.rotation();
 
-  PIDController spinPID(3,0, 4);
-  PIDController  linPID(2,0, 2);
   ToggleB ESTOP;
   ToggleB Clamp;
   ESTOP.setValue(true);
@@ -111,28 +110,30 @@ int main() {
   SingleB rotateFrontLeft;
   SingleB rotateFrontRight;
 
-  wait(100, msec);
-
-  InertialPosition xdist(Inertial, xaxis); 
-
-  bumper Stop = bumper(Brain.ThreeWirePort.B);
-
   double current_angle = 0;
-  Brain.Screen.clearScreen();
-  Brain.Screen.print(X_Group.get_max_rot_speed());
-  Brain.Screen.clearScreen();
 
-
-  GenerateBoxes box_generator;
-  ShowBoxes box_shower;
+  // GenerateBoxes box_generator;
+  // ShowBoxes box_shower;
   // std::cout << box_generator.generate(2,2)[0].br_x << "\n";
-  box_shower.show(Brain, box_generator.generate(3,2));
-
+  // box_shower.show(Brain, box_generator.generate(3,2));  
+  // rotation Rot = rotation(PORT6,false);
+  OdomWheel wheel1(rotation(PORT6,false),inertial(PORT13),1,0,0,-4.52);
+  OdomWheel wheel2(rotation(PORT7,false),inertial(PORT13),1,90,0.47,-0.47);
   
+  double last_time = 0;
   
   while (true) {
+    double current_time = abs(std::fmod(Inertial.rotation(),360));
+    // std::cout << abs(std::fmod(Inertial.rotation(),360.0)) << "\n";
+    if ((current_time - last_time) <= -100){
+      std::cout << "\n\n\n";
+      wheel1.update();
+      wheel2.update();
+    }
+    last_time = current_time;
+
     // Update ESTOP and Clamp buttons with physical button states
-    ESTOP.update((Controller1.ButtonR1.pressing() || Stop.value()));
+    ESTOP.update((Controller1.ButtonR1.pressing()));
     Clamp.update(Controller1.ButtonL1.pressing());
 
     if (rotateFrontLeft.update(Controller1.ButtonL2.pressing()))
@@ -146,18 +147,22 @@ int main() {
       double speed1 = Controller1.Axis4.position();
       double speed2 = -Controller1.Axis3.position();
       double angle = atan2(speed1,speed2)/M_PI*180.0;
-      double spin = - Controller1.Axis1.position()/100.0;
+      double spin =  0.001;
+      // double spin = - Controller1.Axis1.position()/100.0;
 
       double abs_speed = pow(pow(speed1,2)+pow(speed2,2),0.5);
+
+      // std::cout << abs_speed << "\n";
+
       X_Group.set_rot_speed(spin*X_Group.get_max_rot_speed());
-      X_Group.set_lin_speed(abs_speed * 100);
+      X_Group.set_lin_speed(abs_speed * X_Group.get_max_lin_speed(angle) / 100.0);
       X_Group.set_steeringAngle(Inertial.rotation() - angle_adjust + angle + current_angle);
     } else {
-     X_Group.set_rot_speed(0); 
-     X_Group.set_lin_speed(0);
+      X_Group.set_rot_speed(0);
+      X_Group.set_lin_speed(0);
     }
     X_Group.update();
 
-    wait(20,msec);
+    wait(10,msec);
   }
 }

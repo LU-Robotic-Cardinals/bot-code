@@ -13,7 +13,7 @@
 struct AngledM {
   private:
     // Struct variable definitions
-    vex::motor motor;
+    vex::motor Motor;
     // In rot/min
     double max_motor_speed; // Rot speed of motor at 100% power
     double max_wheel_speed; // Rot speed of wheel at 100% power
@@ -25,7 +25,7 @@ struct AngledM {
     double rot_coef; // Special correcting variable for rotational motion
 
     // For PID stuff
-    PIDController pid_obj;
+    // PIDController pid_obj;
     timer Time; // Time object
     double current_speed = 0; // Current speed, updated on set_speed()
     double current_time = Time.time(); // Global deffinition of current time
@@ -49,12 +49,12 @@ struct AngledM {
       double dv = (new_speed - current_speed) / dt;
 
       // Maximum acceleration
-      double max_accell = 10;
+      double max_accell = 100;
       // If acceleration is larger than limit
       // and limiting is enabled, then apply
       // the limit.
-      if (fabs(dv) > fabs(max_accell/50) && max_accell != 0) {
-        dv = fabs(max_accell/50) * getSign(dv);
+      if (fabs(dv) > fabs(max_accell/(1/dt)) && max_accell != 0) {
+        dv = fabs(max_accell/(1/dt)) * getSign(dv);
       }
 
       if (getSign(current_speed + dv) == -getSign(current_speed) && new_speed == 0)
@@ -68,23 +68,21 @@ struct AngledM {
       // if (fabs(current_speed) * 1000.0 <= 1.0)
       //   current_speed = 0;
 
-      motor.spin(forward,current_speed*100,percent);
+      Motor.spin(forward,current_speed*100,percent);
 
       last_time = Time.time();
-      last_rotation = motor.position(degrees);
+      // last_rotation = Motor.position(degrees);
     }
 
     AngledM(vex::motor Motor_Obj, double maximum_motor_speed = 200,
     double maximum_wheel_speed = 200, double wheel_radius_size = 1, 
     double wheel_center_angle = 0, double wheel_bot_radius = 1, 
-    double linear_coefficient = 1, double rotation_coefficient = 1, 
-    PIDController pid_system = PIDController(1,0,10)) :
+    double linear_coefficient = 1, double rotation_coefficient = 1) :
 
-    motor(Motor_Obj), max_motor_speed(maximum_motor_speed),
+    Motor(Motor_Obj), max_motor_speed(maximum_motor_speed),
     max_wheel_speed(maximum_wheel_speed), wheel_radius(wheel_radius_size),
     wheel_angle(wheel_center_angle), dist_rot_center(wheel_bot_radius), 
-    lin_coef(linear_coefficient), rot_coef(rotation_coefficient),
-    pid_obj(pid_system) {}
+    lin_coef(linear_coefficient), rot_coef(rotation_coefficient) {}
 
     double get_lin_speed_coef(double theta) {
       double val = cos( ((theta - wheel_angle)/180.0) * M_PI) * lin_coef;

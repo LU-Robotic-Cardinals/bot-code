@@ -65,8 +65,10 @@ class ShowBoxes{
       std::string color = hex_to_string(c_box.outline_color);
       // brain_obj.Screen.setFillColor(color);
       // brain_obj.Screen.setPenColor(color);
-      brain_obj.Screen.setFillColor(hex_to_string(c_box.outline_color));
-      brain_obj.Screen.setPenColor(hex_to_string(c_box.outline_color));
+      // brain_obj.Screen.setFillColor(hex_to_string(c_box.outline_color));
+      // brain_obj.Screen.setPenColor(hex_to_string(c_box.outline_color));
+      brain_obj.Screen.setFillColor("#FF0000");
+      brain_obj.Screen.setPenColor("#FF0000");
 
       brain_obj.Screen.drawRectangle(
         c_box.tl_x,  c_box.tl_y,
@@ -74,8 +76,10 @@ class ShowBoxes{
         c_box.br_y-c_box.tl_y);
       
       // Inside of the box
-      brain_obj.Screen.setFillColor(hex_to_string(c_box.fill_color));
-      brain_obj.Screen.setPenColor(hex_to_string(c_box.fill_color));
+      // brain_obj.Screen.setFillColor(hex_to_string(c_box.fill_color));
+      // brain_obj.Screen.setPenColor(hex_to_string(c_box.fill_color));
+      brain_obj.Screen.setFillColor("#FFFF00");
+      brain_obj.Screen.setPenColor("#FFFF00");
       brain_obj.Screen.drawRectangle(
         c_box.tl_x+c_box.border_thickness,  c_box.tl_y+c_box.border_thickness,
         c_box.br_x-c_box.tl_x - 2 * c_box.border_thickness,
