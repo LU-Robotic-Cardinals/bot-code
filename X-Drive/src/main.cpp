@@ -29,9 +29,10 @@
 #include <iostream>
 #include "odometry.h"
 
+using namespace vex;
+
 timer Timer;
 
-using namespace vex;
 using signature = vision::signature;
 using code = vision::code;
 
@@ -72,14 +73,6 @@ std::vector<AngledM> initialMotors = {
 {motor(PORT12, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius,  1, -1}  //SE Dow
 };
 
-// std::vector<AngledM> initialMotors_2 = {
-// {motor(PORT3, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  45, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)},  
-// {motor(PORT4, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  45, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)},
-// {motor(PORT5, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  45, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, 
-// {motor(PORT6, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  45, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)}, 
-// {motor(PORT7, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  45, bot_radius,  1, -1, PIDController(Kp,Ki,Kd, Mp, Md, Mi)} 
-// };
-
 // Initialize X_Drive Instance
 X_Drive X_Group(initialMotors);
 
@@ -117,51 +110,51 @@ int main() {
   // std::cout << box_generator.generate(2,2)[0].br_x << "\n";
   // box_shower.show(Brain, box_generator.generate(3,2));  
   // rotation Rot = rotation(PORT6,false);
-  OdomWheel wheel1(rotation(PORT6,false),inertial(PORT13),1,0,0,-4.52);
-  OdomWheel wheel2(rotation(PORT7,false),inertial(PORT13),1,90,0.47,-0.47);
-  
-  double last_time = 0;
+
+  std::vector<EncoderWheel> wheels = {
+  {rotation(PORT6,false),inertial(PORT13),1, -90,-4.54,-180},
+  {rotation(PORT7,false),inertial(PORT13),1, 180,-0.66,-135}
+  };
+
+  OdomWheels odom(wheels);
+
+  PathTrace pather(X_Group,odom,Inertial);
   
   while (true) {
-    double current_time = abs(std::fmod(Inertial.rotation(),360));
-    // std::cout << abs(std::fmod(Inertial.rotation(),360.0)) << "\n";
-    if ((current_time - last_time) <= -100){
-      std::cout << "\n\n\n";
-      wheel1.update();
-      wheel2.update();
-    }
-    last_time = current_time;
-
+    odom.update();
     // Update ESTOP and Clamp buttons with physical button states
     ESTOP.update((Controller1.ButtonR1.pressing()));
-    Clamp.update(Controller1.ButtonL1.pressing());
+    // Clamp.update(Controller1.ButtonL1.pressing());
 
-    if (rotateFrontLeft.update(Controller1.ButtonL2.pressing()))
-      current_angle += 90;
+    // if (rotateFrontLeft.update(Controller1.ButtonL2.pressing()))
+    //   current_angle += 90;
 
-    if (rotateFrontRight.update(Controller1.ButtonR2.pressing()))
-      current_angle -= 90;
+    // if (rotateFrontRight.update(Controller1.ButtonR2.pressing()))
+    //   current_angle -= 90;
     
-    Clamp_Actuator.set(Clamp.getValue());
+    // Clamp_Actuator.set(Clamp.getValue());
     if(ESTOP.getValue()) {      
-      double speed1 = Controller1.Axis4.position();
-      double speed2 = -Controller1.Axis3.position();
-      double angle = atan2(speed1,speed2)/M_PI*180.0;
-      double spin =  0.001;
+      
+
+
+      // double speed1 = Controller1.Axis4.position() / 100.0;
+      // double speed2 = -Controller1.Axis3.position() / 100.0;
+      // double angle = atan2(speed1,speed2)/M_PI*180.0;
+      // // double spin =  0;
       // double spin = - Controller1.Axis1.position()/100.0;
 
-      double abs_speed = pow(pow(speed1,2)+pow(speed2,2),0.5);
+      // double abs_speed = pow(pow(speed1,2)+pow(speed2,2),0.5);
+      // double steering = Inertial.rotation() - angle_adjust + angle + current_angle;
 
-      // std::cout << abs_speed << "\n";
-
-      X_Group.set_rot_speed(spin*X_Group.get_max_rot_speed());
-      X_Group.set_lin_speed(abs_speed * X_Group.get_max_lin_speed(angle) / 100.0);
-      X_Group.set_steeringAngle(Inertial.rotation() - angle_adjust + angle + current_angle);
-    } else {
-      X_Group.set_rot_speed(0);
-      X_Group.set_lin_speed(0);
+      // X_Group.set_rot_speed(spin*X_Group.get_max_rot_speed());
+      // X_Group.set_lin_speed(abs_speed * X_Group.get_max_lin_speed(steering));
+      // X_Group.set_steeringAngle(steering);
+    // } else {
+      // X_Group.set_rot_speed(0);
+      // X_Group.set_lin_speed(0);
+      pather.update();
     }
-    X_Group.update();
+    // X_Group.update();
 
     wait(10,msec);
   }

@@ -7,6 +7,8 @@
 #include "pidcontroller.h"
 #include "screen.h"
 
+using namespace vex;
+
 #ifndef CLASSES_H
 #define CLASSES_H
 
@@ -34,45 +36,50 @@ struct AngledM {
 
 
   public:
+
+
     // This just sets the speed of the motor
     // to a percentage value
     void set_speed(double new_speed) {
       // std::cout << new_speed << "\n";
       // new_speed = 1;
-
+      // current_speed = 0;
       // motor.spin(forward,new_speed*100,percent);
       // Delta time
       double dt = (Time.time() - last_time)/1000.0;
 
       // delta speed
       // change in speed per time
-      double dv = (new_speed - current_speed) / dt;
+      long double dv = (new_speed - current_speed) / dt;
 
       // Maximum acceleration
-      double max_accell = 100;
+      // per second
+      double max_accell = 1/1;
       // If acceleration is larger than limit
       // and limiting is enabled, then apply
       // the limit.
-      if (fabs(dv) > fabs(max_accell/(1/dt)) && max_accell != 0) {
-        dv = fabs(max_accell/(1/dt)) * getSign(dv);
+      if (fabs(dv) > fabs(max_accell * dt) && max_accell != 0) {
+        dv = fabs(max_accell * dt) * getSign(dv);
       }
 
-      if (getSign(current_speed + dv) == -getSign(current_speed) && new_speed == 0)
-        current_speed = 0;
-
+      if (getSign(new_speed - (current_speed + dv)) == -getSign(new_speed - current_speed))
+        current_speed = new_speed;
+      else {
       // Calculate speed
-      current_speed += dv;
+        current_speed += dv;
+      }
 
-      // std::cout << current_speed << "\n";
-
-      // if (fabs(current_speed) * 1000.0 <= 1.0)
-      //   current_speed = 0;
+      // if (fabs(current_speed) > 1)
+      //   current_speed = fabs(current_speed) / current_speed;
+      // current_speed = new_speed;
 
       Motor.spin(forward,current_speed*100,percent);
 
       last_time = Time.time();
-      // last_rotation = Motor.position(degrees);
     }
+
+
+
 
     AngledM(vex::motor Motor_Obj, double maximum_motor_speed = 200,
     double maximum_wheel_speed = 200, double wheel_radius_size = 1, 
@@ -131,7 +138,7 @@ struct AngledM {
       // Since 100% is the max, find how many "slopes" 
       // it takes to max out the motor
       double result = 1.0 / slope;
-      return result;
+      return fabs(result);
       
     }
 
@@ -248,104 +255,105 @@ class SingleB {
 
 class X_Drive {
 private:
-    std::vector<AngledM> motors;
-    double max_motor_speed; // Needs to be set as a percentage 0 <= x <= 1
-    double linear_speed; //In inches/min
-    double steering_angle; // In degrees
-    double rot_speed;
+  std::vector<AngledM> motors;
+  double max_motor_speed; // Needs to be set as a percentage 0 <= x <= 1
+  double linear_speed; //In inches/min
+  double steering_angle; // In degrees
+  double rot_speed;
 
 public:
-    X_Drive(const std::vector<AngledM>& initialMotors)
-        : motors(initialMotors), max_motor_speed(1), linear_speed(0), steering_angle(0), rot_speed(0) {}
+  X_Drive(const std::vector<AngledM>& initialMotors)
+    : motors(initialMotors), max_motor_speed(1), linear_speed(0), steering_angle(0), rot_speed(0) {}
 
-    void addMotor(const AngledM& motor) {
-        motors.push_back(motor);
+  void addMotor(const AngledM& motor) {
+    motors.push_back(motor);
+  }
+
+  std::vector<AngledM> getMotors() const {
+    return motors;
+  }
+
+  void removeMotorByIndex(size_t index) {
+    if (index < motors.size()) {
+      motors.erase(motors.begin() + index);
     }
+  }
 
-    std::vector<AngledM> getMotors() const {
-        return motors;
-    }
+  void update() {
+    // Percent speed for each motor
+    std::vector<double> p_speeds(motors.size());
 
-    void removeMotorByIndex(size_t index) {
-        if (index < motors.size()) {
-            motors.erase(motors.begin() + index);
-        }
-    }
-
-    void update() {
-      // Percent speed for each motor
-      std::vector<double> p_speeds(motors.size());
-
-      double max_coef = 0;
-      for (size_t i = 0; i < motors.size(); ++i) {
-          p_speeds[i]  = motors[i].get_lin_speed(linear_speed,steering_angle);
-          p_speeds[i] += motors[i].get_rot_speed(rot_speed);
-          if (fabs(p_speeds[i]) > max_coef) {
-              max_coef = fabs(p_speeds[i]);
-          }
+    double max_coef = 0;
+    for (size_t i = 0; i < motors.size(); ++i) {
+      p_speeds[i]  = motors[i].get_lin_speed(linear_speed,steering_angle);
+      p_speeds[i] += motors[i].get_rot_speed(rot_speed);
+      if (fabs(p_speeds[i]) > max_coef) {
+        max_coef = fabs(p_speeds[i]);
       }
-      // std::cout << max_coef << "\n";
-
-      double overspeed_scalar = 1;              //  \/ \/ \/ \/ \/ This is to make sure the motors don't max out
-      if ((fabs(max_coef) > max_motor_speed) || (fabs(max_coef) > 1.0))
-          overspeed_scalar = (1.0 / max_coef) * std::min(max_motor_speed, 1.0);
-
-      // overspeed_scalar = 1;
-
-      for (size_t i = 0; i < motors.size(); ++i) {
-          p_speeds[i] = p_speeds[i] * overspeed_scalar;
-          motors[i].set_speed(p_speeds[i]);
-          // printf("%7.2f\n",p_speeds[i]);
-      }
-      // printf("\n");
     }
+    // std::cout << max_coef << "\n";
 
-    double get_max_lin_speed(double angle) {
-      // This is the X_Drive class implimentation of the
-      // AngledM get_max_lin_speed function for every motor
-      // in the group.
-      double max_speed = 0;
-      for (size_t i = 0; i < motors.size(); ++i) {
-        // Find the slowest one since that will imit all the others
-        // max_speed == 0  is because the max_speed is initialized to zero
-        // and not some massive number. Without it, get_max_lin_speed would
-        // not give the right number.
-        if (motors[i].get_max_lin_speed(angle) < max_speed || max_speed == 0)
-          max_speed = motors[i].get_max_lin_speed(angle);
-      }
-      return max_speed;
-    }
+    double overspeed_scalar = 1;              //  \/ \/ \/ \/ \/ This is to make sure the motors don't max out
+    if ((fabs(max_coef) > max_motor_speed) || (fabs(max_coef) > 1.0))
+      overspeed_scalar = (1.0 / max_coef) * std::min(max_motor_speed, 1.0);
 
-    double get_max_rot_speed() {
-      // This is the X_Drive class implimentation of the
-      // AngledM get_max_rot_speed function for every motor
-      // in the group.
-      double max_speed = 0;
-      for (size_t i = 0; i < motors.size(); ++i) {
-        // Find the slowest one since that will imit all the others
-        // (max_speed == 0)  is because the max_speed is initialized to zero
-        // and not some massive number. Without it, get_max_rot_speed would
-        // not give the right number.
-        if (motors[i].get_max_rot_speed() < max_speed || max_speed == 0)
-          max_speed = motors[i].get_max_rot_speed();
-      }
-      return max_speed;
-    }
+    // overspeed_scalar = 1;
 
-    void set_max_speed(double new_speed) {
-        max_motor_speed = new_speed;
+    for (size_t i = 0; i < motors.size(); ++i) {
+      p_speeds[i] = p_speeds[i] * overspeed_scalar;
+      motors[i].set_speed(p_speeds[i]);
+      // std::cout << p_speeds[i] << "\n\n\n";
+      // printf("%7.2f\n",p_speeds[i]);
     }
+    // printf("\n");
+  }
 
-    void set_lin_speed(double new_speed) {
-        linear_speed = new_speed;
+  double get_max_lin_speed(double angle) {
+    // This is the X_Drive class implimentation of the
+    // AngledM get_max_lin_speed function for every motor
+    // in the group.
+    double max_speed = 0;
+    for (size_t i = 0; i < motors.size(); ++i) {
+      // Find the slowest one since that will imit all the others
+      // max_speed == 0  is because the max_speed is initialized to zero
+      // and not some massive number. Without it, get_max_lin_speed would
+      // not give the right number.
+      if (motors[i].get_max_lin_speed(angle) < max_speed || max_speed == 0)
+        max_speed = motors[i].get_max_lin_speed(angle);
     }
+    return max_speed;
+  }
 
-    void set_steeringAngle(double new_angle) {
-        steering_angle = new_angle;
+  double get_max_rot_speed() {
+    // This is the X_Drive class implimentation of the
+    // AngledM get_max_rot_speed function for every motor
+    // in the group.
+    double max_speed = 0;
+    for (size_t i = 0; i < motors.size(); ++i) {
+      // Find the slowest one since that will imit all the others
+      // (max_speed == 0)  is because the max_speed is initialized to zero
+      // and not some massive number. Without it, get_max_rot_speed would
+      // not give the right number.
+      if (motors[i].get_max_rot_speed() < max_speed || max_speed == 0)
+        max_speed = motors[i].get_max_rot_speed();
     }
-    void set_rot_speed(double new_speed) {
-        rot_speed = new_speed;
-    }
+    return max_speed;
+  }
+
+  void set_max_speed(double new_speed) {
+    max_motor_speed = new_speed;
+  }
+
+  void set_lin_speed(double new_speed) {
+    linear_speed = new_speed;
+  }
+
+  void set_steeringAngle(double new_angle) {
+    steering_angle = new_angle;
+  }
+  void set_rot_speed(double new_speed) {
+    rot_speed = new_speed;
+  }
 };
 
 class RollingAverage {
@@ -353,13 +361,13 @@ public:
     RollingAverage(int window_size) : window_size_(window_size), sum_(0.0), window_(window_size, 0.0) {}
 
     void add(double value) {
-        sum_ += value - window_[index_];
-        window_[index_] = value;
-        index_ = (index_ + 1) % window_size_;
+      sum_ += value - window_[index_];
+      window_[index_] = value;
+      index_ = (index_ + 1) % window_size_;
     }
 
     double average() const {
-        return sum_ / window_size_;
+      return sum_ / window_size_;
     }
 
 private:
