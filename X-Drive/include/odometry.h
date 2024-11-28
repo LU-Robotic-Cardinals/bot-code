@@ -237,8 +237,7 @@ class PathTrace {
 
       double abs_speed = pow(pow(x_error,2)+pow(y_error,2),0.5)/10;
       double steering = Inertial.rotation() + angle;
-      // std::cout << x_error << "\n" << y_error << "\n" << index << "\n\n\n";
-      std::cout << abs_speed  << "\n\n\n";
+      
       if (fabs(abs_speed) > 0.2)
         abs_speed = 0.2;
 
