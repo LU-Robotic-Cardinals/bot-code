@@ -93,13 +93,6 @@ __vex_critical_section
 
 Discarded input sections
 
- .text          0x0000000000000000        0x0 build/src/position.o
- .comment       0x0000000000000000       0x2e build/src/position.o
- .note.GNU-stack
-                0x0000000000000000        0x0 build/src/position.o
- .ARM.attributes
-                0x0000000000000000       0x38 build/src/position.o
- .llvm_addrsig  0x0000000000000000        0x0 build/src/position.o
  .text          0x0000000000000000        0x0 build/src/main.o
  .text._Z10closetonumddd
                 0x0000000000000000       0x2c build/src/main.o
@@ -121,9 +114,21 @@ Discarded input sections
                 0x0000000000000000       0x18 build/src/main.o
  .ARM.exidx.text._ZNK6xy_posplERKS_
                 0x0000000000000000        0x8 build/src/main.o
+ .text._ZNK6xy_posmiERKS_
+                0x0000000000000000       0x18 build/src/main.o
+ .ARM.exidx.text._ZNK6xy_posmiERKS_
+                0x0000000000000000        0x8 build/src/main.o
+ .text._ZN6xy_pos14convert_to_xyzEv
+                0x0000000000000000       0x18 build/src/main.o
+ .ARM.exidx.text._ZN6xy_pos14convert_to_xyzEv
+                0x0000000000000000        0x8 build/src/main.o
  .text._ZN6xy_pos16convert_to_polarEv
                 0x0000000000000000       0x88 build/src/main.o
  .ARM.exidx.text._ZN6xy_pos16convert_to_polarEv
+                0x0000000000000000        0x8 build/src/main.o
+ .text._ZN6xy_pos20convert_to_sphericalEv
+                0x0000000000000000       0x98 build/src/main.o
+ .ARM.exidx.text._ZN6xy_pos20convert_to_sphericalEv
                 0x0000000000000000        0x8 build/src/main.o
  .text._ZN7xyz_pos9translateEddd
                 0x0000000000000000       0x38 build/src/main.o
@@ -133,6 +138,18 @@ Discarded input sections
                 0x0000000000000000       0x1c build/src/main.o
  .ARM.exidx.text._ZNK7xyz_posplERKS_
                 0x0000000000000000        0x8 build/src/main.o
+ .text._ZNK7xyz_posmiERKS_
+                0x0000000000000000       0x1c build/src/main.o
+ .ARM.exidx.text._ZNK7xyz_posmiERKS_
+                0x0000000000000000        0x8 build/src/main.o
+ .text._ZN7xyz_pos13convert_to_xyEv
+                0x0000000000000000        0xc build/src/main.o
+ .ARM.exidx.text._ZN7xyz_pos13convert_to_xyEv
+                0x0000000000000000        0x8 build/src/main.o
+ .text._ZN7xyz_pos16convert_to_polarEv
+                0x0000000000000000       0x88 build/src/main.o
+ .ARM.exidx.text._ZN7xyz_pos16convert_to_polarEv
+                0x0000000000000000        0x8 build/src/main.o
  .text._ZN7xyz_pos20convert_to_sphericalEv
                 0x0000000000000000       0xa0 build/src/main.o
  .ARM.exidx.text._ZN7xyz_pos20convert_to_sphericalEv
@@ -141,17 +158,49 @@ Discarded input sections
                 0x0000000000000000       0x24 build/src/main.o
  .ARM.exidx.text._ZN9polar_pos9translateEdd
                 0x0000000000000000        0x8 build/src/main.o
+ .text._ZNK9polar_posplERKS_
+                0x0000000000000000      0x130 build/src/main.o
+ .ARM.exidx.text._ZNK9polar_posplERKS_
+                0x0000000000000000        0x8 build/src/main.o
+ .text._ZNK9polar_posmiERKS_
+                0x0000000000000000      0x130 build/src/main.o
+ .ARM.exidx.text._ZNK9polar_posmiERKS_
+                0x0000000000000000        0x8 build/src/main.o
+ .text._ZN9polar_pos20convert_to_sphericalEv
+                0x0000000000000000       0x18 build/src/main.o
+ .ARM.exidx.text._ZN9polar_pos20convert_to_sphericalEv
+                0x0000000000000000        0x8 build/src/main.o
  .text._ZN9polar_pos13convert_to_xyEv
                 0x0000000000000000       0x88 build/src/main.o
  .ARM.exidx.text._ZN9polar_pos13convert_to_xyEv
+                0x0000000000000000        0x8 build/src/main.o
+ .text._ZN9polar_pos14convert_to_xyzEv
+                0x0000000000000000       0x90 build/src/main.o
+ .ARM.exidx.text._ZN9polar_pos14convert_to_xyzEv
                 0x0000000000000000        0x8 build/src/main.o
  .text._ZN13spherical_pos9translateEddd
                 0x0000000000000000       0x38 build/src/main.o
  .ARM.exidx.text._ZN13spherical_pos9translateEddd
                 0x0000000000000000        0x8 build/src/main.o
+ .text._ZNK13spherical_posplERKS_
+                0x0000000000000000      0x228 build/src/main.o
+ .ARM.exidx.text._ZNK13spherical_posplERKS_
+                0x0000000000000000        0x8 build/src/main.o
+ .text._ZNK13spherical_posmiERKS_
+                0x0000000000000000      0x228 build/src/main.o
+ .ARM.exidx.text._ZNK13spherical_posmiERKS_
+                0x0000000000000000        0x8 build/src/main.o
+ .text._ZN13spherical_pos13convert_to_xyEv
+                0x0000000000000000       0xd0 build/src/main.o
+ .ARM.exidx.text._ZN13spherical_pos13convert_to_xyEv
+                0x0000000000000000        0x8 build/src/main.o
  .text._ZN13spherical_pos14convert_to_xyzEv
                 0x0000000000000000      0x110 build/src/main.o
  .ARM.exidx.text._ZN13spherical_pos14convert_to_xyzEv
+                0x0000000000000000        0x8 build/src/main.o
+ .text._ZN13spherical_pos16convert_to_polarEv
+                0x0000000000000000        0xc build/src/main.o
+ .ARM.exidx.text._ZN13spherical_pos16convert_to_polarEv
                 0x0000000000000000        0x8 build/src/main.o
  .group         0x0000000000000000       0x14 build/src/main.o
  .group         0x0000000000000000       0x14 build/src/main.o
@@ -191,7 +240,7 @@ Discarded input sections
  .data.Mp       0x0000000000000000        0x8 build/src/main.o
  .bss.Mi        0x0000000000000000        0x8 build/src/main.o
  .bss.Md        0x0000000000000000        0x8 build/src/main.o
- .llvm_addrsig  0x0000000000000000        0xc build/src/main.o
+ .llvm_addrsig  0x0000000000000000       0x12 build/src/main.o
  .text          0x0000000000000000        0x0 /home/nixuser/.config/Code/User/globalStorage/vexrobotics.vexcode/sdk/cpp/V5/V5_20240223_11_00_00/vexv5/libv5rt.a(v5_startup.c.obj)
  .data          0x0000000000000000        0x0 /home/nixuser/.config/Code/User/globalStorage/vexrobotics.vexcode/sdk/cpp/V5/V5_20240223_11_00_00/vexv5/libv5rt.a(v5_startup.c.obj)
  .bss           0x0000000000000000        0x0 /home/nixuser/.config/Code/User/globalStorage/vexrobotics.vexcode/sdk/cpp/V5/V5_20240223_11_00_00/vexv5/libv5rt.a(v5_startup.c.obj)
@@ -8245,7 +8294,7 @@ Linker script and memory map
                 0x00000000038049b4                __fini_array_end = .
 
 .ARM.attributes
-                0x00000000038049b4       0x38
+                0x00000000038049b4       0x3a
                 0x00000000038049b4                __ARM.attributes_start = .
  *(.ARM.attributes)
  .ARM.attributes
@@ -8449,7 +8498,6 @@ Linker script and memory map
                 0x0000000003908720                __undef_stack = .
                 0x0000000003908720                _end = .
 LOAD /home/nixuser/.config/Code/User/globalStorage/vexrobotics.vexcode/sdk/cpp/V5/V5_20240223_11_00_00/vexv5/stdlib_0.lib
-LOAD build/src/position.o
 LOAD build/src/main.o
 START GROUP
 LOAD /home/nixuser/.config/Code/User/globalStorage/vexrobotics.vexcode/sdk/cpp/V5/V5_20240223_11_00_00/vexv5/libv5rt.a
