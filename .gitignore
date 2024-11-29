@@ -1,0 +1,7 @@
+**/build
+**/build/
+**/build/*.o
+**/build/*.exe
+**/build/*.bin
+**/build/*.elf
+**/build/*.map

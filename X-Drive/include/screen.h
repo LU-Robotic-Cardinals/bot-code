@@ -2,11 +2,13 @@
 #include <cmath>
 #include <string>
 #include <vector>
-// #include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <iomanip>
 #include <string>
+
+#ifndef SCREEN_H
+#define SCREEN_H
 
 std::string hex_to_string(unsigned int color) {
     std::stringstream ss;
@@ -87,3 +89,5 @@ class ShowBoxes{
     }
   }
 };
+
+#endif // SCREEN_H

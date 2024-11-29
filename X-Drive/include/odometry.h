@@ -6,6 +6,9 @@
 
 using namespace vex;
 
+#ifndef ODOMETRY_H
+#define ODOMETRY_H
+
 struct EncoderWheel {
 private:
   vex::rotation Encoder;
@@ -258,3 +261,5 @@ class PathTrace {
     X_Group.update();
   }
 };
+
+#endif // ODOMETRY_H

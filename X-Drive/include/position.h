@@ -1,5 +1,8 @@
 #include <cmath>
 
+#ifndef POSITION_H
+#define POSITION_H
+
 // This whole file is shenanigans; there's no getting arround it.
 // All of the following is just cpp weirdness to get arround
 // the cpp compiler evaluating from the top of the file downward.
@@ -317,3 +320,5 @@ xyz_pos spherical_pos::convert_to_xyz() {
 polar_pos spherical_pos::convert_to_polar() {
   return polar_pos(rho,theta);
 }
+
+#endif // POSITION_H

@@ -2,7 +2,11 @@
 #include <cmath>
 #include <string>
 #include <vector>
-#include "helpers.h"
+// #include "helpers.h"
+// #include "classes.h"
+
+#ifndef PIDCONTROLLER_H
+#define PIDCONTROLLER_H
 
 class PIDController {
 public:
@@ -55,3 +59,5 @@ private:
     double last_time;
     timer Time;
 };
+
+#endif // PIDCONTROLLER

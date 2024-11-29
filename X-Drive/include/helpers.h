@@ -1,7 +1,12 @@
+#include "vex.h"
 #include <cmath>
 #include <string>
 #include <vector>
 #include <iostream>
+
+#ifndef HELPERS_H
+#define HELPERS_H
+
 
 bool closetonum(double value = 0, double target = 0, double error = 0.001) {
     if (fabs(value - target) < fabs(error)) {
@@ -16,6 +21,7 @@ int getSign(double value) {
   }
   return (fabs(value) / value);
 }
+
 
 class DelayTimer {
   private:
@@ -34,3 +40,81 @@ class DelayTimer {
   }
 };
 
+
+class ToggleB {
+  public:
+  // Simple toggle button stuct
+  // run setval and update each loop
+  bool output = false;
+  bool lastUpdatePressed = false;
+  
+  bool update(bool button) {
+    // static bool lastUpdatePressed = false;
+    if (button && (!lastUpdatePressed))
+      output = !output;
+    lastUpdatePressed = button;
+    // std::cout << &output << " : output : " << output << "\n";
+    // std::cout << &lastUpdatePressed << " : last : " << lastUpdatePressed << "\n";
+    // std::cout << &button << " : button : " << button << "\n";
+    // std::cout << "Break\n";
+    return output;
+  }
+  bool getValue() {
+    return output;
+  }
+  bool setValue(bool setVal) {
+    output = setVal;
+    return output;
+  }
+};
+
+
+class SingleB {
+  public:
+  // Simple toggle button stuct
+  // run setval and update each loop
+  bool output = false;
+  bool lastUpdatePressed = false;
+  
+  bool update(bool button) {
+    // static bool lastUpdatePressed = false;
+    if (button && (!lastUpdatePressed))
+      output = true;
+    else
+      output = false;
+    lastUpdatePressed = button;
+    return output;
+  }
+  bool getValue() {
+    return output;
+  }
+  bool setValue(bool setVal) {
+    output = setVal;
+    return output;
+  }
+};
+
+
+class RollingAverage {
+public:
+    RollingAverage(int window_size) : window_size_(window_size), sum_(0.0), window_(window_size, 0.0) {}
+
+    void add(double value) {
+      sum_ += value - window_[index_];
+      window_[index_] = value;
+      index_ = (index_ + 1) % window_size_;
+    }
+
+    double average() const {
+      return sum_ / window_size_;
+    }
+
+private:
+    int window_size_;
+    double sum_;
+    std::vector<double> window_;
+    int index_ = 0;
+};
+
+
+#endif // HELPERS_H
