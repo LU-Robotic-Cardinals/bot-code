@@ -28,6 +28,7 @@
 // #include "helper.cpp"
 #include <iostream>
 #include "odometry.h"
+#include <position_declarations.h>
 
 using namespace vex;
 
