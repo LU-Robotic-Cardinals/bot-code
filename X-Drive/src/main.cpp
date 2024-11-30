@@ -65,14 +65,15 @@ int main() {
   PathTrace tracer(X_Group,odom,Inertial);
 
   std::vector<xy_pos> points = {xy_pos(10,10), xy_pos(650,500), xy_pos(650,-500), xy_pos(10,400),xy_pos(10,300),xy_pos(10,50)};
-  BezierCurve bc;
+  BezierCurve bcurve;
   
   while (true) {
-    std::cout << '\n';
     for (double i = 0; i < 1; i += 0.001){
-      xy_pos dpoint = bc.calPoint(points,i);
+      xy_pos dpoint = bcurve.calPoint(points,i);
+
       Brain.Screen.setFillColor("#110088");
       Brain.Screen.setPenColor("#110088");
+
       Brain.Screen.drawRectangle(dpoint.x,  dpoint.y,10,10);
     }
     // polar_pos drive_vector = xy_pos(Controller1.Axis3.position(),-Controller1.Axis4.position()).convert_to_polar().add(0,Inertial.rotation());

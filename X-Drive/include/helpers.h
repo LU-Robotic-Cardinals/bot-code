@@ -63,14 +63,9 @@ class ToggleB {
   bool lastUpdatePressed = false;
   
   bool update(bool button) {
-    // static bool lastUpdatePressed = false;
     if (button && (!lastUpdatePressed))
       output = !output;
     lastUpdatePressed = button;
-    // std::cout << &output << " : output : " << output << "\n";
-    // std::cout << &lastUpdatePressed << " : last : " << lastUpdatePressed << "\n";
-    // std::cout << &button << " : button : " << button << "\n";
-    // std::cout << "Break\n";
     return output;
   }
   bool getValue() {

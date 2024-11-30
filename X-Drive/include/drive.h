@@ -15,7 +15,7 @@ struct AngledM {
     // Struct variable definitions
     vex::motor Motor;
     // In rot/min
-    double max_motor_speed; // Rot speed of motor at 100% power
+    double motor_speed_limiter; // Rot speed of motor at 100% power
     double max_wheel_speed; // Rot speed of wheel at 100% power
     // Inches
     double wheel_radius; // Wheel radius
@@ -84,7 +84,7 @@ struct AngledM {
     double wheel_center_angle = 0, double wheel_bot_radius = 1, 
     double linear_coefficient = 1, double rotation_coefficient = 1) :
 
-    Motor(Motor_Obj), max_motor_speed(maximum_motor_speed),
+    Motor(Motor_Obj), motor_speed_limiter(maximum_motor_speed),
     max_wheel_speed(maximum_wheel_speed), wheel_radius(wheel_radius_size),
     wheel_angle(wheel_center_angle), dist_rot_center(wheel_bot_radius), 
     lin_coef(linear_coefficient), rot_coef(rotation_coefficient) {}
@@ -203,62 +203,87 @@ struct AngledM {
 class X_Drive {
 private:
   std::vector<AngledM> motors;
-  double max_motor_speed; // Needs to be set as a percentage 0 <= x <= 1
+  double motor_speed_limiter; // Needs to be set as a percentage 0 <= x <= 1
   double linear_speed; //In inches/min
   double steering_angle; // In degrees
-  double rot_speed;
+  double rot_speed; // In deg/sec
 
 public:
   X_Drive(const std::vector<AngledM>& initialMotors)
-    : motors(initialMotors), max_motor_speed(1), linear_speed(0), steering_angle(0), rot_speed(0) {}
+    : motors(initialMotors), motor_speed_limiter(1), linear_speed(0), steering_angle(0), rot_speed(0) {}
 
+  // Add new motor to the drivetrain
   void addMotor(const AngledM& motor) {
     motors.push_back(motor);
   }
 
+  //Get array of motors in drivetrain
   std::vector<AngledM> getMotors() const {
     return motors;
   }
 
+  // Remove a motor from the drivetrain by index
+  // See X_Drive::getMotors() to get indices
   void removeMotorByIndex(size_t index) {
     if (index < motors.size()) {
       motors.erase(motors.begin() + index);
     }
   }
 
+  // Update drivetrain motor speeds
+  // Should be run often and in main loop of the program
   void update() {
-    // Percent speed for each motor
+    // Percent speed for each motor, each -1 to 1
     std::vector<double> p_speeds(motors.size());
 
+    // Some drive speeds will attempt to drive the motors beond what they can achive. Since the bot can not
+    // physically achive this, to maintain correct motion becavior (e.g. rotating and driving simultaneously)
+    // the RELATIVE motor speeds must be maintained. To acomplish this, the maximum motor speed will be found
+    // and then all motors can be multiplied by a scalar that ensures the fastest motor is no faster than what
+    // can be physically achived. If the fastest motor is slower than the max, the scalar will be one to leave
+    // the speeds unchanged.
+
     double max_coef = 0;
+    // Find the maximum motor speed percentage amongst all the motors
     for (size_t i = 0; i < motors.size(); ++i) {
+      // Calculating the final motor percentage for any one motor
+      // invloves adding the speed from linear movement and rotational
+      // movement.
       p_speeds[i]  = motors[i].get_lin_speed(linear_speed,steering_angle);
       p_speeds[i] += motors[i].get_rot_speed(rot_speed);
+
+      // If the absolute value of the calculated motor 
+      // speed is bigger than the last recorded maximum, 
+      // set the max equal to that absolute value
       if (fabs(p_speeds[i]) > max_coef) {
         max_coef = fabs(p_speeds[i]);
       }
     }
-    // std::cout << max_coef << "\n";
 
-    double overspeed_scalar = 1;              //  \/ \/ \/ \/ \/ This is to make sure the motors don't max out
-    if ((fabs(max_coef) > max_motor_speed) || (fabs(max_coef) > 1.0))
-      overspeed_scalar = (1.0 / max_coef) * std::min(max_motor_speed, 1.0);
+    // This is the scalar to bring all motor speeds less than
+    // or equal to one.
+    // Default is one so that speeds are unchanged unless necessary.
+    double overspeed_scalar = 1;
 
-    // overspeed_scalar = 1;
 
+    // If max motor speed is either greater than one or greater than
+    // the artificial, lower motor_speed_limiter.
+    if ((fabs(max_coef) > motor_speed_limiter) || (fabs(max_coef) > 1.0))
+      // Calculate the normalizing scalar and then scale all to the
+      // motor_speed_limiter if it is lower than one.
+      overspeed_scalar = (1.0 / max_coef) * std::min(motor_speed_limiter, 1.0);
+
+    // Calculate final speeds with the overspeed_scalar and set them
     for (size_t i = 0; i < motors.size(); ++i) {
       p_speeds[i] = p_speeds[i] * overspeed_scalar;
       motors[i].set_speed(p_speeds[i]);
-      // std::cout << p_speeds[i] << "\n\n\n";
-      // printf("%7.2f\n",p_speeds[i]);
     }
-    // printf("\n");
   }
 
+  // This is the X_Drive class implimentation of the
+  // AngledM get_max_lin_speed function for every motor
+  // in the group.
   double get_max_lin_speed(double angle) {
-    // This is the X_Drive class implimentation of the
-    // AngledM get_max_lin_speed function for every motor
-    // in the group.
     double max_speed = 0;
     for (size_t i = 0; i < motors.size(); ++i) {
       // Find the slowest one since that will imit all the others
@@ -271,10 +296,10 @@ public:
     return max_speed;
   }
 
+  // This is the X_Drive class implimentation of the
+  // AngledM get_max_rot_speed function for every motor
+  // in the group.
   double get_max_rot_speed() {
-    // This is the X_Drive class implimentation of the
-    // AngledM get_max_rot_speed function for every motor
-    // in the group.
     double max_speed = 0;
     for (size_t i = 0; i < motors.size(); ++i) {
       // Find the slowest one since that will imit all the others
@@ -287,51 +312,68 @@ public:
     return max_speed;
   }
 
+  // Set max motor speed limit for drivetrain
+  // Should be a number between zero and one
   void set_max_speed(double new_speed) {
-    max_motor_speed = new_speed;
+    motor_speed_limiter = new_speed;
   }
 
+  // Set linear speed of robot along steering angle
+  // In inches/min
   void set_lin_speed(double new_speed) {
     linear_speed = new_speed;
   }
 
+  // Set direction that robot should travel linearly
+  // In deg from reference zero
   void set_steeringAngle(double new_angle) {
     steering_angle = new_angle;
   }
+  
+  // Set rotational speed of the bot
+  // Counterclockwise is positive
+  // In deg/sec
   void set_rot_speed(double new_speed) {
     rot_speed = new_speed;
   }
 };
 
-
-double wheel_rad_size = 1.625; // In inches
-double bot_radius = 10;
-
-double motor_reference = 0; // Degrees from brain
-double motor_speed = 200;
-double wheel_speed = 200 * 5 / 3;
-std::vector<AngledM> x_motor_constructor(std::vector<vex::motor> motors, int motors_per_axle, 
+// Function that returns a list of AngledM objects for an X-Drive drivetrain
+// configuration using the given parameters. (wheel size, wheel angle, etc.)
+std::vector<AngledM> x_motor_constructor(std::vector<vex::motor> motorObjs, int motors_per_axle, 
   double wheel_rad_size, double bot_radius, double motor_speed, double angle_reference = 0, double gear_ratio = 1,
   double global_lin_coef = 1, double global_rot_coef = 1) {
 
-  std::vector<AngledM> initialMotors;
+  // Empty vector array to hold the AngledM objs
+  std::vector<AngledM> motors;
+  // Which axle out of 4 that the motor is a part of
   int axle = 0;
-  for (int i = 0; i < motors.size(); i++) {
+  for (int i = 0; i < motorObjs.size(); i++) {
+    // Calculate angle of axle
     double angle = ( 90 * (axle) - 45);
+    // Wrap angle arround if too big
     if (angle > 180)
      angle -= 360;
+    
+    // Motors on an axle are assumed to be geared together
+    // such that every other motor must be reversed
     int lin_coef = pow(-1,i % motors_per_axle + axle + 1);
+    // Similar to lin_coef but independent of axle
     int rot_coef = pow(-1,i % motors_per_axle);
 
-    initialMotors.push_back(
-      AngledM(motors[i], motor_speed, motor_speed * gear_ratio, wheel_rad_size, angle-angle_reference,
+    // Add calculated motor to the list
+    motors.push_back(
+      AngledM(motorObjs[i], motor_speed, motor_speed * gear_ratio, wheel_rad_size, angle-angle_reference,
        bot_radius, lin_coef * global_lin_coef, rot_coef * global_rot_coef)
     );
+    // Edgecase of one motor per axel
     if (motors_per_axle == 1)
-      axle +=1;
-    axle += i % motors_per_axle; // Increment the axel val after using it
+      {axle +=1;}
+    else 
+      // Increment the axel val after using it
+      {axle += i % motors_per_axle;}
   }
-  return initialMotors;
+  return motors;
 }
 
 #endif // DRIVE_H
