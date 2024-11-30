@@ -221,7 +221,7 @@ public:
 
 class PathTrace {
   private:
-    std::vector<std::vector<int>> positions = {{8,0},{16,0},{0,0}};
+    std::vector<std::vector<int>> positions = {{0,8},{0,16},{0,0}};
     OdomWheels Odom_Obj;
     X_Drive X_Group;
     DelayTimer pos_delay;

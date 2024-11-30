@@ -5,6 +5,8 @@
 #include <iostream>
 #include "helpers.h"
 
+using namespace vex;
+
 #ifndef DRIVE_H
 #define DRIVE_H
 
@@ -50,7 +52,7 @@ struct AngledM {
 
       // Maximum acceleration
       // per second
-      double max_accell = 1/1;
+      double max_accell = 1/10;
       // If acceleration is larger than limit
       // and limiting is enabled, then apply
       // the limit.
@@ -300,5 +302,49 @@ public:
     rot_speed = new_speed;
   }
 };
+
+
+double wheel_rad_size = 1.625; // In inches
+double bot_radius = 10;
+
+double motor_reference = 0; // Degrees from brain
+double motor_speed = 200;
+double wheel_speed = 200 * 5 / 3;
+std::vector<AngledM> x_motor_constructor(std::vector<vex::motor> motors, int motors_per_axle, 
+  double wheel_rad_size, double bot_radius, double motor_speed, double angle_reference = 0, double gear_ratio = 1,
+  double global_lin_coef = 1, double global_rot_coef = 1) {
+
+  std::vector<AngledM> initialMotors;
+  int axle = 0;
+  for (int i = 0; i < motors.size(); i++) {
+    double angle = ( 90 * (axle) - 45);
+    if (angle > 180)
+     angle -= 360;
+    int lin_coef = pow(-1,i % motors_per_axle + axle + 1);
+    int rot_coef = pow(-1,i % motors_per_axle);
+
+    initialMotors.push_back(
+      AngledM(motors[i], motor_speed, motor_speed * gear_ratio, wheel_rad_size, angle-angle_reference,
+       bot_radius, lin_coef * global_lin_coef, rot_coef * global_rot_coef)
+    );
+    if (motors_per_axle == 1)
+      axle +=1;
+    axle += i % motors_per_axle; // Increment the axel val after using it
+
+
+    // {motor(PORT19, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius, -1,  1}, // NW Top
+    // {motor(PORT20, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius,  1, -1}, // NW Dow
+
+    // {motor(PORT2,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius,  1,  1}, // NE Top
+    // {motor(PORT1,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius, -1, -1}, // NE Dow
+
+    // {motor(PORT11, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius, -1,  1}, //SE Top
+    // {motor(PORT12, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius,  1, -1}  //SE Dow
+
+    // {motor(PORT10, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius,  1,  1}, // SW Top
+    // {motor(PORT9,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius, -1, -1}, // SW Dow
+  }
+  return initialMotors;
+}
 
 #endif // DRIVE_H

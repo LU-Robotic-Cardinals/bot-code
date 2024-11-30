@@ -24,29 +24,19 @@ timer Timer;
 // A global instance of brain used for printing to the V5 Brain screen
 brain  Brain;
 
-double wheel_rad_size = 1.625; // In inches
-double bot_radius = 10;
-
-double motor_reference = 0; // Degrees from brain
-double motor_speed = 200;
-double wheel_speed = 200 * 5 / 3;
-
-std::vector<AngledM> initialMotors = {
-{motor(PORT19, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius, -1,  1}, // NW Top
-{motor(PORT20, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius,  1, -1}, // NW Dow
-
-{motor(PORT2,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius,  1,  1}, // NE Top
-{motor(PORT1,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius, -1, -1}, // NE Dow
-
-{motor(PORT10, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius,  1,  1}, // SW Top
-{motor(PORT9,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius, -1, -1}, // SW Dow
-
-{motor(PORT11, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius, -1,  1}, //SE Top
-{motor(PORT12, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius,  1, -1}  //SE Dow
+std::vector<vex::motor> initialMotors = {
+  motor(PORT19, ratio18_1, false),  // NW Top
+  motor(PORT20, ratio18_1, false),  // NW Dow
+  motor(PORT2,  ratio18_1, false),  // NE Top
+  motor(PORT1,  ratio18_1, false),  // NE Dow
+  motor(PORT11, ratio18_1, false),  // SE Top
+  motor(PORT12, ratio18_1, false),  // SE Dow
+  motor(PORT10, ratio18_1, false),  // SW Top
+  motor(PORT9,  ratio18_1, false)   // SW Dow
 };
 
 // Initialize X_Drive Instance
-X_Drive X_Group(initialMotors);
+X_Drive X_Group(x_motor_constructor(initialMotors, 2, 1.625, 10, 200, 0, 5.0/3.0));
 
 // Define the controller
 controller Controller1 = controller(primary);
@@ -65,9 +55,6 @@ int main() {
   }
   Brain.Screen.clearScreen();
 
-  ToggleB ESTOP;
-  ESTOP.setValue(true);
-
   std::vector<EncoderWheel> wheels = {
   {rotation(PORT6,false),Inertial,1, -90,-4.54,-180},
   {rotation(PORT7,false),Inertial,1, 180,-0.66,-135}
@@ -75,15 +62,20 @@ int main() {
 
   OdomWheels odom(wheels);
 
-  PathTrace pather(X_Group,odom,Inertial);
+  PathTrace tracer(X_Group,odom,Inertial);
   
   while (true) {
-    odom.update();
-    // Update ESTOP and Clamp buttons with physical button states
-    ESTOP.update((Controller1.ButtonR1.pressing()));
-    if(ESTOP.getValue()) {      
-      pather.update();
-    }
+    polar_pos drive_vector = xy_pos(Controller1.Axis3.position(),-Controller1.Axis4.position()).convert_to_polar().translate(0,Inertial.rotation());
+    double spin = - Controller1.Axis1.position();
+
+    X_Group.set_lin_speed(drive_vector.r/100.0 * X_Group.get_max_lin_speed(drive_vector.theta));
+    X_Group.set_steeringAngle(drive_vector.theta);
+    X_Group.set_rot_speed(spin/100.0 * X_Group.get_max_rot_speed());
+
+    X_Group.update();
+
+    // tracer.update();
+
     wait(10,msec);
   }
 }

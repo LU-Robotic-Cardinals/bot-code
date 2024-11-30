@@ -169,10 +169,10 @@ xyz_pos xy_pos::convert_to_xyz() {
   return xyz_pos(x,y,0);
 }
 polar_pos xy_pos::convert_to_polar() {
-  return polar_pos(pow(pow(x,2)+pow(y,2),0.5),atan2(y,x) / M_PI * 360.0);
+  return polar_pos(pow(pow(x,2)+pow(y,2),0.5),atan2(y,x) / M_PI * 180.0);
 }
 spherical_pos xy_pos::convert_to_spherical() {
-  return spherical_pos(pow(pow(x,2)+pow(y,2),0.5),atan2(y,x) / M_PI * 360.0,0);
+  return spherical_pos(pow(pow(x,2)+pow(y,2),0.5),atan2(y,x) / M_PI * 180.0,0);
 }
 
 
@@ -199,11 +199,11 @@ xy_pos xyz_pos::convert_to_xy() {
   return xy_pos(x,y);
 }
 polar_pos xyz_pos::convert_to_polar() {
-  return polar_pos(pow(pow(x,2)+pow(y,2),0.5),atan2(y,x) / M_PI * 360.0);
+  return polar_pos(pow(pow(x,2)+pow(y,2),0.5),atan2(y,x) / M_PI * 180.0);
 }
 spherical_pos xyz_pos::convert_to_spherical() {
   double rho = pow( pow(x,2) + pow(y,2) + pow(z,2) ,0.5);
-  double theta = atan2(y,x) / M_PI * 360.0;
+  double theta = atan2(y,x) / M_PI * 180.0;
   double phi = acos(z / (rho));
   return spherical_pos(rho, theta, phi);
 }
@@ -221,26 +221,26 @@ polar_pos polar_pos::translate(double delta_r, double delta_theta) {
 
 
 polar_pos polar_pos::operator+(const polar_pos& other) const {
-  double x = r * cos(theta / M_PI * 360.0);
-  double y = r * sin(theta / M_PI * 360.0);
-  double other_x = other.r * cos(other.theta / M_PI * 360.0);
-  double other_y = other.r * sin(other.theta / M_PI * 360.0);
+  double x = r * cos(theta / M_PI * 180.0);
+  double y = r * sin(theta / M_PI * 180.0);
+  double other_x = other.r * cos(other.theta / M_PI * 180.0);
+  double other_y = other.r * sin(other.theta / M_PI * 180.0);
 
   double new_x = x + other_x;
   double new_y = y + other_y;
 
-  return polar_pos(pow(pow(new_x,2)+pow(new_y,2),0.5),atan2(new_y,new_x) / M_PI * 360.0);
+  return polar_pos(pow(pow(new_x,2)+pow(new_y,2),0.5),atan2(new_y,new_x) / M_PI * 180.0);
 }
 polar_pos polar_pos::operator-(const polar_pos& other) const {
-  double x = r * cos(theta / M_PI * 360.0);
-  double y = r * sin(theta / M_PI * 360.0);
-  double other_x = other.r * cos(other.theta / M_PI * 360.0);
-  double other_y = other.r * sin(other.theta / M_PI * 360.0);
+  double x = r * cos(theta / M_PI * 180.0);
+  double y = r * sin(theta / M_PI * 180.0);
+  double other_x = other.r * cos(other.theta / M_PI * 180.0);
+  double other_y = other.r * sin(other.theta / M_PI * 180.0);
 
   double new_x = x - other_x;
   double new_y = y - other_y;
 
-  return polar_pos(pow(pow(new_x,2)+pow(new_y,2),0.5),atan2(new_y,new_x) / M_PI * 360.0);
+  return polar_pos(pow(pow(new_x,2)+pow(new_y,2),0.5),atan2(new_y,new_x) / M_PI * 180.0);
 }
 
 
@@ -248,13 +248,13 @@ spherical_pos polar_pos::convert_to_spherical() {
   return spherical_pos(r,theta,0);
 }
 xy_pos polar_pos::convert_to_xy(){
-  double x = r * cos(theta / M_PI * 360.0);
-  double y = r * sin(theta / M_PI * 360.0);
+  double x = r * cos(theta / M_PI * 180.0);
+  double y = r * sin(theta / M_PI * 180.0);
   return xy_pos(x,y);
 }
 xyz_pos polar_pos::convert_to_xyz(){
-  double x = r * cos(theta / M_PI * 360.0);
-  double y = r * sin(theta / M_PI * 360.0);
+  double x = r * cos(theta / M_PI * 180.0);
+  double y = r * sin(theta / M_PI * 180.0);
   return xyz_pos(x,y,0);
 }
 
@@ -271,50 +271,50 @@ spherical_pos spherical_pos::translate(double delta_rho, double delta_theta, dou
 
 
 spherical_pos spherical_pos::operator+(const spherical_pos& other) const {
-  double x = rho * sin(phi * M_PI / 360.0) * cos(theta * M_PI / 360.0);
-  double y = rho * sin(phi * M_PI / 360.0) * sin(theta * M_PI / 360.0);
-  double z = rho * cos(phi * M_PI / 360.0);
-  double other_x = other.rho * sin(other.phi * M_PI / 360.0) * cos(other.theta * M_PI / 360.0);
-  double other_y = other.rho * sin(other.phi * M_PI / 360.0) * sin(other.theta * M_PI / 360.0);
-  double other_z = other.rho * cos(other.phi * M_PI / 360.0);
+  double x = rho * sin(phi * M_PI / 180.0) * cos(theta * M_PI / 180.0);
+  double y = rho * sin(phi * M_PI / 180.0) * sin(theta * M_PI / 180.0);
+  double z = rho * cos(phi * M_PI / 180.0);
+  double other_x = other.rho * sin(other.phi * M_PI / 180.0) * cos(other.theta * M_PI / 180.0);
+  double other_y = other.rho * sin(other.phi * M_PI / 180.0) * sin(other.theta * M_PI / 180.0);
+  double other_z = other.rho * cos(other.phi * M_PI / 180.0);
 
   double new_x = x + other_x;
   double new_y = y + other_y;
   double new_z = y + other_z;
 
   double new_rho = pow( pow(new_x,2) + pow(new_y,2) + pow(new_z,2) ,0.5);
-  double new_theta = atan2(new_y,new_x) / M_PI * 360.0;
+  double new_theta = atan2(new_y,new_x) / M_PI * 180.0;
   double new_phi = acos(new_z / (new_rho));
   return spherical_pos(new_rho, new_theta, new_phi);
 }
 spherical_pos spherical_pos::operator-(const spherical_pos& other) const {
-  double x = rho * sin(phi * M_PI / 360.0) * cos(theta * M_PI / 360.0);
-  double y = rho * sin(phi * M_PI / 360.0) * sin(theta * M_PI / 360.0);
-  double z = rho * cos(phi * M_PI / 360.0);
-  double other_x = other.rho * sin(other.phi * M_PI / 360.0) * cos(other.theta * M_PI / 360.0);
-  double other_y = other.rho * sin(other.phi * M_PI / 360.0) * sin(other.theta * M_PI / 360.0);
-  double other_z = other.rho * cos(other.phi * M_PI / 360.0);
+  double x = rho * sin(phi * M_PI / 180.0) * cos(theta * M_PI / 180.0);
+  double y = rho * sin(phi * M_PI / 180.0) * sin(theta * M_PI / 180.0);
+  double z = rho * cos(phi * M_PI / 180.0);
+  double other_x = other.rho * sin(other.phi * M_PI / 180.0) * cos(other.theta * M_PI / 180.0);
+  double other_y = other.rho * sin(other.phi * M_PI / 180.0) * sin(other.theta * M_PI / 180.0);
+  double other_z = other.rho * cos(other.phi * M_PI / 180.0);
 
   double new_x = x - other_x;
   double new_y = y - other_y;
   double new_z = y - other_z;
 
   double new_rho = pow( pow(new_x,2) + pow(new_y,2) + pow(new_z,2) ,0.5);
-  double new_theta = atan2(new_y,new_x) / M_PI * 360.0;
+  double new_theta = atan2(new_y,new_x) / M_PI * 180.0;
   double new_phi = acos(new_z / (new_rho));
   return spherical_pos(new_rho, new_theta, new_phi);
 }
 
 
 xy_pos spherical_pos::convert_to_xy() {
-  double x = rho * sin(phi * M_PI / 360.0) * cos(theta * M_PI / 360.0);
-  double y = rho * sin(phi * M_PI / 360.0) * sin(theta * M_PI / 360.0);
+  double x = rho * sin(phi * M_PI / 180.0) * cos(theta * M_PI / 180.0);
+  double y = rho * sin(phi * M_PI / 180.0) * sin(theta * M_PI / 180.0);
   return xy_pos(x,y);
 }
 xyz_pos spherical_pos::convert_to_xyz() {
-  double x = rho * sin(phi * M_PI / 360.0) * cos(theta * M_PI / 360.0);
-  double y = rho * sin(phi * M_PI / 360.0) * sin(theta * M_PI / 360.0);
-  double z = rho * cos(phi * M_PI / 360.0);
+  double x = rho * sin(phi * M_PI / 180.0) * cos(theta * M_PI / 180.0);
+  double y = rho * sin(phi * M_PI / 180.0) * sin(theta * M_PI / 180.0);
+  double z = rho * cos(phi * M_PI / 180.0);
   return xyz_pos(x,y,z);
 }
 polar_pos spherical_pos::convert_to_polar() {
