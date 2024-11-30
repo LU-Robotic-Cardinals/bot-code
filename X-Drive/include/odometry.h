@@ -212,8 +212,8 @@ public:
     // std::cout << "X: " << x_dist << "\nY:" << y_dist << "\n\n\n"; 
   }
 
-  std::vector<double> get_dist(){
-    return std::vector<double>{x_dist,y_dist};
+  xy_pos get_dist(){
+    return xy_pos(x_dist,y_dist);
   }
 };
 
@@ -221,7 +221,8 @@ public:
 
 class PathTrace {
   private:
-    std::vector<std::vector<int>> positions = {{0,8},{0,16},{0,0}};
+    // std::vector<std::vector<int>> positions = {{0,8},{0,16},{0,0}};
+    std::vector<xy_pos> positions = {xy_pos(0,0),xy_pos(0,16)};
     OdomWheels Odom_Obj;
     X_Drive X_Group;
     DelayTimer pos_delay;
@@ -233,21 +234,18 @@ class PathTrace {
   { 
     Odom_Obj.update();
     if (pos_delay.checkTimer()) {
-      double x_error = positions[index][0] - Odom_Obj.get_dist()[0];
-      double y_error = positions[index][1] - Odom_Obj.get_dist()[1];
 
-      double angle = atan2(y_error,x_error)/M_PI*180.0;
-
-      double abs_speed = pow(pow(x_error,2)+pow(y_error,2),0.5)/10;
-      double steering = Inertial.rotation() + angle;
+      // The amount of math that this new library takes care of is incredible
+      polar_pos drive_vector = xy_pos(positions[index].x - Odom_Obj.get_dist().x,positions[index].y - Odom_Obj.get_dist().y)
+      .convert_to_polar().add(0,Inertial.rotation()).mul(1/10.0,1);
       
-      if (fabs(abs_speed) > 0.2)
-        abs_speed = 0.2;
+      if (fabs(drive_vector.r) > 0.2)
+        drive_vector.r = 0.2;
 
-      X_Group.set_lin_speed(abs_speed * X_Group.get_max_lin_speed(steering));
-      X_Group.set_steeringAngle(steering);
+      X_Group.set_lin_speed(drive_vector.r * X_Group.get_max_lin_speed(drive_vector.theta));
+      X_Group.set_steeringAngle(drive_vector.theta);
 
-      if (abs_speed < 0.1) {
+      if (drive_vector.r < 0.1) {
         pos_delay.startTimer(10);
         index++;
         if (index == positions.size())

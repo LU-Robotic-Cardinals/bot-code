@@ -3,8 +3,8 @@
 #ifndef POSITION_H
 #define POSITION_H
 
-// This whole file is shenanigans; there's no getting arround it.
-// All of the following is just cpp weirdness to get arround
+// This whole file is shenanigans; there's no getting around it.
+// All of the following is just cpp weirdness to get around
 // the cpp compiler evaluating from the top of the file downward.
 // Intelesense can manage to do it and gives no error, but the compiler
 // doesn't like it. So, for future reference and to save the sanity
@@ -27,6 +27,11 @@
 
 // The rest of this code is lacking comments and substandard documentation
 // but im too busy trying to be done with this and get to using it.
+
+// Notes:
+// 1. Already have translate for adding to or subtracting from the values
+// Need transform for multiply/divide
+// 2. As a goal, all functions should be non-destructive.
 
 
 
@@ -59,7 +64,8 @@ public:
   xy_pos operator+(const xy_pos& other) const;
   xy_pos operator-(const xy_pos& other) const;
 
-  xy_pos translate(double delta_x, double delta_y);
+  xy_pos add(double delta_x, double delta_y);
+  xy_pos mul(double coef_x, double coef_y);
 
   xyz_pos convert_to_xyz();
   polar_pos convert_to_polar();
@@ -83,7 +89,8 @@ public:
   xyz_pos operator+(const xyz_pos& other) const;
   xyz_pos operator-(const xyz_pos& other) const;
 
-  xyz_pos translate(double delta_x, double delta_y, double delta_z);
+  xyz_pos add(double delta_x, double delta_y, double delta_z);
+  xyz_pos mul(double coef_x, double coef_y, double coef_z);
 
   xy_pos convert_to_xy();
   polar_pos convert_to_polar();
@@ -104,7 +111,8 @@ public:
   polar_pos operator+(const polar_pos& other) const;
   polar_pos operator-(const polar_pos& other) const;
 
-  polar_pos translate(double delta_r, double delta_theta);
+  polar_pos add(double delta_r, double delta_theta);
+  polar_pos mul(double coef_r, double coef_theta);
 
   xy_pos convert_to_xy();
   xyz_pos convert_to_xyz();
@@ -127,7 +135,8 @@ public:
   spherical_pos operator+(const spherical_pos& other) const;
   spherical_pos operator-(const spherical_pos& other) const;
 
-  spherical_pos translate(double delta_rho, double delta_theta, double delta_phi);
+  spherical_pos add(double delta_rho, double delta_theta, double delta_phi);
+  spherical_pos mul(double coef_rho, double coef_theta, double coef_phi);
 
   xy_pos convert_to_xy();
   xyz_pos convert_to_xyz();
@@ -150,10 +159,15 @@ public:
 
 
 ///////////////////////// xy_pos definitions /////////////////////////
-xy_pos xy_pos::translate(double delta_x, double delta_y) {
-  x += delta_x;
-  y += delta_y;
-  return *this;
+xy_pos xy_pos::add(double delta_x, double delta_y) {
+  double new_x = x + delta_x;
+  double new_y = y + delta_y;
+  return xy_pos(x,y);
+}
+xy_pos xy_pos::mul(double coef_x, double coef_y) {
+  double new_x = x * coef_x;
+  double new_y = y * coef_y;
+  return xy_pos(x,y);
 }
 
 
@@ -179,11 +193,17 @@ spherical_pos xy_pos::convert_to_spherical() {
 
 ///////////////////////// xyz_pos definitions /////////////////////////
 
-xyz_pos xyz_pos::translate(double delta_x, double delta_y, double delta_z) {
-  x += delta_x;
-  y += delta_y;
-  z += delta_z;
-  return *this;
+xyz_pos xyz_pos::add(double delta_x, double delta_y, double delta_z) {
+  double new_x = x + delta_x;
+  double new_y = y + delta_y;
+  double new_z = z + delta_z;
+  return xyz_pos(new_x,new_y,new_z);
+}
+xyz_pos xyz_pos::mul(double coef_x, double coef_y, double coef_z) {
+  double new_x = x * coef_x;
+  double new_y = y * coef_y;
+  double new_z = z * coef_z;
+  return xyz_pos(new_x,new_y,new_z);
 }
 
 
@@ -213,10 +233,15 @@ spherical_pos xyz_pos::convert_to_spherical() {
 
 ///////////////////////// polar_pos definitions /////////////////////////
 
-polar_pos polar_pos::translate(double delta_r, double delta_theta) {
-  r += delta_r;
-  theta += delta_theta;
-  return *this;
+polar_pos polar_pos::add(double delta_r, double delta_theta) {
+  double new_r = r + delta_r;
+  double new_theta = theta + delta_theta;
+  return polar_pos(new_r,new_theta);
+}
+polar_pos polar_pos::mul(double coef_r, double coef_theta) {
+  double new_r = r * coef_r;
+  double new_theta = theta * coef_theta;
+  return polar_pos(new_r,new_theta);
 }
 
 
@@ -262,11 +287,17 @@ xyz_pos polar_pos::convert_to_xyz(){
 
 
 ///////////////////////// spherical_pos definitions /////////////////////////
-spherical_pos spherical_pos::translate(double delta_rho, double delta_theta, double delta_phi) {
-  rho += delta_rho;
-  theta += delta_theta;
-  phi += delta_phi;
-  return *this;
+spherical_pos spherical_pos::add(double delta_rho, double delta_theta, double delta_phi) {
+  double new_rho = rho + delta_rho;
+  double new_theta = theta + delta_theta;
+  double new_phi = phi + delta_phi;
+  return spherical_pos(new_rho,new_theta,new_phi);
+}
+spherical_pos spherical_pos::mul(double coef_rho, double coef_theta, double coef_phi) {
+  double new_rho = rho * coef_rho;
+  double new_theta = theta * coef_theta;
+  double new_phi = phi * coef_phi;
+  return spherical_pos(new_rho,new_theta,new_phi);
 }
 
 

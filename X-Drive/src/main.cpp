@@ -65,14 +65,13 @@ int main() {
   PathTrace tracer(X_Group,odom,Inertial);
   
   while (true) {
-    polar_pos drive_vector = xy_pos(Controller1.Axis3.position(),-Controller1.Axis4.position()).convert_to_polar().translate(0,Inertial.rotation());
+    polar_pos drive_vector = xy_pos(Controller1.Axis3.position(),-Controller1.Axis4.position()).convert_to_polar().add(0,Inertial.rotation());
     double spin = - Controller1.Axis1.position();
-
     X_Group.set_lin_speed(drive_vector.r/100.0 * X_Group.get_max_lin_speed(drive_vector.theta));
     X_Group.set_steeringAngle(drive_vector.theta);
     X_Group.set_rot_speed(spin/100.0 * X_Group.get_max_rot_speed());
 
-    X_Group.update();
+    // X_Group.update();
 
     // tracer.update();
 
