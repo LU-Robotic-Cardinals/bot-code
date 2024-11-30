@@ -41,10 +41,10 @@
 ///////////////////////////////////////////////////////////////////////////
 /////////////////////////      First section      /////////////////////////
 ///////////////////////////////////////////////////////////////////////////
-struct xy_pos;
-struct xyz_pos;
-struct polar_pos;
-struct spherical_pos;
+struct xy_vec;
+struct xyz_vec;
+struct polar_vec;
+struct spherical_vec;
 
 
 
@@ -54,96 +54,96 @@ struct spherical_pos;
 ///////////////////////////////////////////////////////////////////////////
 
 
-///////////////////////// xy_pos /////////////////////////
-struct xy_pos {
+///////////////////////// xy_vec /////////////////////////
+struct xy_vec {
 public:
   double x;
   double y;
 
-  xy_pos(double x_val, double y_val) : x(x_val), y(y_val) {}
+  xy_vec(double x_val, double y_val) : x(x_val), y(y_val) {}
 
 
 
-  xy_pos operator+(const xy_pos& other) const;
-  xy_pos operator-(const xy_pos& other) const;
+  xy_vec operator+(const xy_vec& other) const;
+  xy_vec operator-(const xy_vec& other) const;
 
-  xy_pos add(double delta_x, double delta_y);
-  xy_pos mul(double coef_x, double coef_y);
+  xy_vec add(double delta_x, double delta_y);
+  xy_vec mul(double coef_x, double coef_y);
 
-  xyz_pos convert_to_xyz();
-  polar_pos convert_to_polar();
-  spherical_pos convert_to_spherical();
+  xyz_vec convert_to_xyz();
+  polar_vec convert_to_polar();
+  spherical_vec convert_to_spherical();
 };
 
 
 
 
-///////////////////////// xyz_pos /////////////////////////
-struct xyz_pos {
+///////////////////////// xyz_vec /////////////////////////
+struct xyz_vec {
 public:
   double x;
   double y;
   double z;
 
-  xyz_pos(double x_val, double y_val, double z_val) : x(x_val), y(y_val), z(z_val) {}
+  xyz_vec(double x_val, double y_val, double z_val) : x(x_val), y(y_val), z(z_val) {}
 
 
 
-  xyz_pos operator+(const xyz_pos& other) const;
-  xyz_pos operator-(const xyz_pos& other) const;
+  xyz_vec operator+(const xyz_vec& other) const;
+  xyz_vec operator-(const xyz_vec& other) const;
 
-  xyz_pos add(double delta_x, double delta_y, double delta_z);
-  xyz_pos mul(double coef_x, double coef_y, double coef_z);
+  xyz_vec add(double delta_x, double delta_y, double delta_z);
+  xyz_vec mul(double coef_x, double coef_y, double coef_z);
 
-  xy_pos convert_to_xy();
-  polar_pos convert_to_polar();
-  spherical_pos convert_to_spherical();
+  xy_vec convert_to_xy();
+  polar_vec convert_to_polar();
+  spherical_vec convert_to_spherical();
 };
 
 
 
 
-///////////////////////// polar_pos /////////////////////////
-struct polar_pos {
+///////////////////////// polar_vec /////////////////////////
+struct polar_vec {
 public:
   double r;
   double theta;
 
-  polar_pos(double r_val, double theta_val) : r(r_val), theta(theta_val) {}
+  polar_vec(double r_val, double theta_val) : r(r_val), theta(theta_val) {}
 
-  polar_pos operator+(const polar_pos& other) const;
-  polar_pos operator-(const polar_pos& other) const;
+  polar_vec operator+(const polar_vec& other) const;
+  polar_vec operator-(const polar_vec& other) const;
 
-  polar_pos add(double delta_r, double delta_theta);
-  polar_pos mul(double coef_r, double coef_theta);
+  polar_vec add(double delta_r, double delta_theta);
+  polar_vec mul(double coef_r, double coef_theta);
 
-  xy_pos convert_to_xy();
-  xyz_pos convert_to_xyz();
-  spherical_pos convert_to_spherical();
+  xy_vec convert_to_xy();
+  xyz_vec convert_to_xyz();
+  spherical_vec convert_to_spherical();
 };
 
 
 
 
-///////////////////////// spherical_pos /////////////////////////
-struct spherical_pos {
+///////////////////////// spherical_vec /////////////////////////
+struct spherical_vec {
 public:
   double rho;
   double theta;
   double phi;
 
-  spherical_pos(double rho_value, double theta_value, double phi_value) : rho(rho_value), theta(theta_value), phi(phi_value) {}
+  spherical_vec(double rho_value, double theta_value, double phi_value) : rho(rho_value), theta(theta_value), phi(phi_value) {}
 
 
-  spherical_pos operator+(const spherical_pos& other) const;
-  spherical_pos operator-(const spherical_pos& other) const;
+  spherical_vec operator+(const spherical_vec& other) const;
+  spherical_vec operator-(const spherical_vec& other) const;
 
-  spherical_pos add(double delta_rho, double delta_theta, double delta_phi);
-  spherical_pos mul(double coef_rho, double coef_theta, double coef_phi);
+  spherical_vec add(double delta_rho, double delta_theta, double delta_phi);
+  spherical_vec mul(double coef_rho, double coef_theta, double coef_phi);
 
-  xy_pos convert_to_xy();
-  xyz_pos convert_to_xyz();
-  polar_pos convert_to_polar();
+  xy_vec convert_to_xy();
+  xyz_vec convert_to_xyz();
+  polar_vec convert_to_polar();
 };
 
 
@@ -161,94 +161,94 @@ public:
 ///////////////////////////////////////////////////////////////////////////
 
 
-///////////////////////// xy_pos definitions /////////////////////////
-xy_pos xy_pos::add(double delta_x, double delta_y) {
+///////////////////////// xy_vec definitions /////////////////////////
+xy_vec xy_vec::add(double delta_x, double delta_y) {
   double new_x = x + delta_x;
   double new_y = y + delta_y;
-  return xy_pos(new_x,new_y);
+  return xy_vec(new_x,new_y);
 }
-xy_pos xy_pos::mul(double coef_x, double coef_y) {
+xy_vec xy_vec::mul(double coef_x, double coef_y) {
   double new_x = x * coef_x;
   double new_y = y * coef_y;
-  return xy_pos(new_x,new_y);
+  return xy_vec(new_x,new_y);
 }
 
 
-xy_pos xy_pos::operator+(const xy_pos& other) const {
-  return xy_pos(x + other.x, y + other.y);
+xy_vec xy_vec::operator+(const xy_vec& other) const {
+  return xy_vec(x + other.x, y + other.y);
 }
-xy_pos xy_pos::operator-(const xy_pos& other) const {
-  return xy_pos(x - other.x, y - other.y);
-}
-
-
-xyz_pos xy_pos::convert_to_xyz() {
-  return xyz_pos(x,y,0);
-}
-polar_pos xy_pos::convert_to_polar() {
-  return polar_pos(pow(pow(x,2)+pow(y,2),0.5),atan2(y,x) / M_PI * 180.0);
-}
-spherical_pos xy_pos::convert_to_spherical() {
-  return spherical_pos(pow(pow(x,2)+pow(y,2),0.5),atan2(y,x) / M_PI * 180.0,0);
+xy_vec xy_vec::operator-(const xy_vec& other) const {
+  return xy_vec(x - other.x, y - other.y);
 }
 
 
+xyz_vec xy_vec::convert_to_xyz() {
+  return xyz_vec(x,y,0);
+}
+polar_vec xy_vec::convert_to_polar() {
+  return polar_vec(pow(pow(x,2)+pow(y,2),0.5),atan2(y,x) / M_PI * 180.0);
+}
+spherical_vec xy_vec::convert_to_spherical() {
+  return spherical_vec(pow(pow(x,2)+pow(y,2),0.5),atan2(y,x) / M_PI * 180.0,0);
+}
 
-///////////////////////// xyz_pos definitions /////////////////////////
 
-xyz_pos xyz_pos::add(double delta_x, double delta_y, double delta_z) {
+
+///////////////////////// xyz_vec definitions /////////////////////////
+
+xyz_vec xyz_vec::add(double delta_x, double delta_y, double delta_z) {
   double new_x = x + delta_x;
   double new_y = y + delta_y;
   double new_z = z + delta_z;
-  return xyz_pos(new_x,new_y,new_z);
+  return xyz_vec(new_x,new_y,new_z);
 }
-xyz_pos xyz_pos::mul(double coef_x, double coef_y, double coef_z) {
+xyz_vec xyz_vec::mul(double coef_x, double coef_y, double coef_z) {
   double new_x = x * coef_x;
   double new_y = y * coef_y;
   double new_z = z * coef_z;
-  return xyz_pos(new_x,new_y,new_z);
+  return xyz_vec(new_x,new_y,new_z);
 }
 
 
-xyz_pos xyz_pos::operator+(const xyz_pos& other) const {
-  return xyz_pos(x + other.x, y + other.y, z + other.z);
+xyz_vec xyz_vec::operator+(const xyz_vec& other) const {
+  return xyz_vec(x + other.x, y + other.y, z + other.z);
 }
-xyz_pos xyz_pos::operator-(const xyz_pos& other) const {
-  return xyz_pos(x - other.x, y - other.y, z - other.z);
+xyz_vec xyz_vec::operator-(const xyz_vec& other) const {
+  return xyz_vec(x - other.x, y - other.y, z - other.z);
 }
 
 
-xy_pos xyz_pos::convert_to_xy() {
-  return xy_pos(x,y);
+xy_vec xyz_vec::convert_to_xy() {
+  return xy_vec(x,y);
 }
-polar_pos xyz_pos::convert_to_polar() {
-  return polar_pos(pow(pow(x,2)+pow(y,2),0.5),atan2(y,x) / M_PI * 180.0);
+polar_vec xyz_vec::convert_to_polar() {
+  return polar_vec(pow(pow(x,2)+pow(y,2),0.5),atan2(y,x) / M_PI * 180.0);
 }
-spherical_pos xyz_pos::convert_to_spherical() {
+spherical_vec xyz_vec::convert_to_spherical() {
   double rho = pow( pow(x,2) + pow(y,2) + pow(z,2) ,0.5);
   double theta = atan2(y,x) / M_PI * 180.0;
   double phi = acos(z / (rho));
-  return spherical_pos(rho, theta, phi);
+  return spherical_vec(rho, theta, phi);
 }
 
 
 
 
-///////////////////////// polar_pos definitions /////////////////////////
+///////////////////////// polar_vec definitions /////////////////////////
 
-polar_pos polar_pos::add(double delta_r, double delta_theta) {
+polar_vec polar_vec::add(double delta_r, double delta_theta) {
   double new_r = r + delta_r;
   double new_theta = theta + delta_theta;
-  return polar_pos(new_r,new_theta);
+  return polar_vec(new_r,new_theta);
 }
-polar_pos polar_pos::mul(double coef_r, double coef_theta) {
+polar_vec polar_vec::mul(double coef_r, double coef_theta) {
   double new_r = r * coef_r;
   double new_theta = theta * coef_theta;
-  return polar_pos(new_r,new_theta);
+  return polar_vec(new_r,new_theta);
 }
 
 
-polar_pos polar_pos::operator+(const polar_pos& other) const {
+polar_vec polar_vec::operator+(const polar_vec& other) const {
   double x = r * cos(theta / M_PI * 180.0);
   double y = r * sin(theta / M_PI * 180.0);
   double other_x = other.r * cos(other.theta / M_PI * 180.0);
@@ -257,9 +257,9 @@ polar_pos polar_pos::operator+(const polar_pos& other) const {
   double new_x = x + other_x;
   double new_y = y + other_y;
 
-  return polar_pos(pow(pow(new_x,2)+pow(new_y,2),0.5),atan2(new_y,new_x) / M_PI * 180.0);
+  return polar_vec(pow(pow(new_x,2)+pow(new_y,2),0.5),atan2(new_y,new_x) / M_PI * 180.0);
 }
-polar_pos polar_pos::operator-(const polar_pos& other) const {
+polar_vec polar_vec::operator-(const polar_vec& other) const {
   double x = r * cos(theta / M_PI * 180.0);
   double y = r * sin(theta / M_PI * 180.0);
   double other_x = other.r * cos(other.theta / M_PI * 180.0);
@@ -268,43 +268,43 @@ polar_pos polar_pos::operator-(const polar_pos& other) const {
   double new_x = x - other_x;
   double new_y = y - other_y;
 
-  return polar_pos(pow(pow(new_x,2)+pow(new_y,2),0.5),atan2(new_y,new_x) / M_PI * 180.0);
+  return polar_vec(pow(pow(new_x,2)+pow(new_y,2),0.5),atan2(new_y,new_x) / M_PI * 180.0);
 }
 
 
-spherical_pos polar_pos::convert_to_spherical() {
-  return spherical_pos(r,theta,0);
+spherical_vec polar_vec::convert_to_spherical() {
+  return spherical_vec(r,theta,0);
 }
-xy_pos polar_pos::convert_to_xy(){
+xy_vec polar_vec::convert_to_xy(){
   double x = r * cos(theta / M_PI * 180.0);
   double y = r * sin(theta / M_PI * 180.0);
-  return xy_pos(x,y);
+  return xy_vec(x,y);
 }
-xyz_pos polar_pos::convert_to_xyz(){
+xyz_vec polar_vec::convert_to_xyz(){
   double x = r * cos(theta / M_PI * 180.0);
   double y = r * sin(theta / M_PI * 180.0);
-  return xyz_pos(x,y,0);
+  return xyz_vec(x,y,0);
 }
 
 
 
 
-///////////////////////// spherical_pos definitions /////////////////////////
-spherical_pos spherical_pos::add(double delta_rho, double delta_theta, double delta_phi) {
+///////////////////////// spherical_vec definitions /////////////////////////
+spherical_vec spherical_vec::add(double delta_rho, double delta_theta, double delta_phi) {
   double new_rho = rho + delta_rho;
   double new_theta = theta + delta_theta;
   double new_phi = phi + delta_phi;
-  return spherical_pos(new_rho,new_theta,new_phi);
+  return spherical_vec(new_rho,new_theta,new_phi);
 }
-spherical_pos spherical_pos::mul(double coef_rho, double coef_theta, double coef_phi) {
+spherical_vec spherical_vec::mul(double coef_rho, double coef_theta, double coef_phi) {
   double new_rho = rho * coef_rho;
   double new_theta = theta * coef_theta;
   double new_phi = phi * coef_phi;
-  return spherical_pos(new_rho,new_theta,new_phi);
+  return spherical_vec(new_rho,new_theta,new_phi);
 }
 
 
-spherical_pos spherical_pos::operator+(const spherical_pos& other) const {
+spherical_vec spherical_vec::operator+(const spherical_vec& other) const {
   double x = rho * sin(phi * M_PI / 180.0) * cos(theta * M_PI / 180.0);
   double y = rho * sin(phi * M_PI / 180.0) * sin(theta * M_PI / 180.0);
   double z = rho * cos(phi * M_PI / 180.0);
@@ -319,9 +319,9 @@ spherical_pos spherical_pos::operator+(const spherical_pos& other) const {
   double new_rho = pow( pow(new_x,2) + pow(new_y,2) + pow(new_z,2) ,0.5);
   double new_theta = atan2(new_y,new_x) / M_PI * 180.0;
   double new_phi = acos(new_z / (new_rho));
-  return spherical_pos(new_rho, new_theta, new_phi);
+  return spherical_vec(new_rho, new_theta, new_phi);
 }
-spherical_pos spherical_pos::operator-(const spherical_pos& other) const {
+spherical_vec spherical_vec::operator-(const spherical_vec& other) const {
   double x = rho * sin(phi * M_PI / 180.0) * cos(theta * M_PI / 180.0);
   double y = rho * sin(phi * M_PI / 180.0) * sin(theta * M_PI / 180.0);
   double z = rho * cos(phi * M_PI / 180.0);
@@ -336,23 +336,23 @@ spherical_pos spherical_pos::operator-(const spherical_pos& other) const {
   double new_rho = pow( pow(new_x,2) + pow(new_y,2) + pow(new_z,2) ,0.5);
   double new_theta = atan2(new_y,new_x) / M_PI * 180.0;
   double new_phi = acos(new_z / (new_rho));
-  return spherical_pos(new_rho, new_theta, new_phi);
+  return spherical_vec(new_rho, new_theta, new_phi);
 }
 
 
-xy_pos spherical_pos::convert_to_xy() {
+xy_vec spherical_vec::convert_to_xy() {
   double x = rho * sin(phi * M_PI / 180.0) * cos(theta * M_PI / 180.0);
   double y = rho * sin(phi * M_PI / 180.0) * sin(theta * M_PI / 180.0);
-  return xy_pos(x,y);
+  return xy_vec(x,y);
 }
-xyz_pos spherical_pos::convert_to_xyz() {
+xyz_vec spherical_vec::convert_to_xyz() {
   double x = rho * sin(phi * M_PI / 180.0) * cos(theta * M_PI / 180.0);
   double y = rho * sin(phi * M_PI / 180.0) * sin(theta * M_PI / 180.0);
   double z = rho * cos(phi * M_PI / 180.0);
-  return xyz_pos(x,y,z);
+  return xyz_vec(x,y,z);
 }
-polar_pos spherical_pos::convert_to_polar() {
-  return polar_pos(rho,theta);
+polar_vec spherical_vec::convert_to_polar() {
+  return polar_vec(rho,theta);
 }
 
 #endif // POSITION_H

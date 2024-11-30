@@ -140,12 +140,12 @@ public:
     last_rot = current_rot;
   };
 
-  xy_pos get_delta_dist() {
-    return xy_pos(x_delta,y_delta);
+  xy_vec get_delta_dist() {
+    return xy_vec(x_delta,y_delta);
   };
 
-  xy_pos get_delta_confidence() {
-    return xy_pos(x_confidence,y_confidence);
+  xy_vec get_delta_confidence() {
+    return xy_vec(x_confidence,y_confidence);
   };
 };
 
@@ -213,8 +213,8 @@ public:
     // std::cout << "X: " << x_dist << "\nY:" << y_dist << "\n\n\n"; 
   }
 
-  xy_pos get_dist(){
-    return xy_pos(x_dist,y_dist);
+  xy_vec get_dist(){
+    return xy_vec(x_dist,y_dist);
   }
 };
 
@@ -223,7 +223,7 @@ public:
 class PathTrace {
   private:
     // std::vector<std::vector<int>> positions = {{0,8},{0,16},{0,0}};
-    std::vector<xy_pos> positions = {xy_pos(0,0),xy_pos(0,16)};
+    std::vector<xy_vec> positions = {xy_vec(0,0),xy_vec(0,16)};
     OdomWheels Odom_Obj;
     X_Drive X_Group;
     DelayTimer pos_delay;
@@ -237,7 +237,7 @@ class PathTrace {
     if (pos_delay.checkTimer()) {
 
       // The amount of math that this new library takes care of is incredible
-      polar_pos drive_vector = xy_pos(positions[index].x - Odom_Obj.get_dist().x,positions[index].y - Odom_Obj.get_dist().y)
+      polar_vec drive_vector = xy_vec(positions[index].x - Odom_Obj.get_dist().x,positions[index].y - Odom_Obj.get_dist().y)
       .convert_to_polar().add(0,Inertial.rotation()).mul(1/10.0,1);
       
       if (fabs(drive_vector.r) > 0.2)
@@ -265,8 +265,8 @@ class PathTrace {
 
 struct BezierCurve {
 
-  xy_pos calPoint(std::vector<xy_pos> points, double t) {
-    xy_pos resultant(0,0);
+  xy_vec calPoint(std::vector<xy_vec> points, double t) {
+    xy_vec resultant(0,0);
     for (int i = 0; i < points.size(); i++){
       double t_pow = pow(t,i) * pow(1-t,points.size() - (i + 1))
         * binoCoef(points.size()-1,i);
@@ -275,8 +275,8 @@ struct BezierCurve {
     return resultant;
   }
 
-  xy_pos calDeriv(std::vector<xy_pos> points, double t) {
-    xy_pos resultant(0,0);
+  xy_vec calDeriv(std::vector<xy_vec> points, double t) {
+    xy_vec resultant(0,0);
     for (int i = 0; i < points.size(); i++){
       double f1 = pow(t,i);
       double f2 = pow(1-t,points.size() - (i + 1));
