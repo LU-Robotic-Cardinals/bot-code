@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include "position.h"
 
 using namespace vex;
 
@@ -139,12 +140,12 @@ public:
     last_rot = current_rot;
   };
 
-  std::vector<double> get_delta_dist() {
-    return std::vector<double>{x_delta,y_delta};
+  xy_pos get_delta_dist() {
+    return xy_pos(x_delta,y_delta);
   };
 
-  std::vector<double> get_delta_confidence() {
-    return std::vector<double>{x_confidence,y_confidence};
+  xy_pos get_delta_confidence() {
+    return xy_pos(x_confidence,y_confidence);
   };
 };
 
@@ -189,8 +190,8 @@ public:
       // Update wheel
       wheels[i].update();
 
-      x_conf_sq[i] = pow(  fabs(wheels[i].get_delta_confidence()[0])  ,2);
-      y_conf_sq[i] = pow(  fabs(wheels[i].get_delta_confidence()[1])  ,2);
+      x_conf_sq[i] = pow(  fabs(wheels[i].get_delta_confidence().x)  ,2);
+      y_conf_sq[i] = pow(  fabs(wheels[i].get_delta_confidence().y)  ,2);
 
       // Find conf totals
       total_x_conf_sq += x_conf_sq[i];
@@ -200,8 +201,8 @@ public:
     double delta_x = 0;
     double delta_y = 0;
     for (size_t i = 0; i < wheels.size(); i++) {
-      delta_x += wheels[i].get_delta_dist()[0] * x_conf_sq[i] / total_x_conf_sq;
-      delta_y += wheels[i].get_delta_dist()[1] * y_conf_sq[i] / total_y_conf_sq;
+      delta_x += wheels[i].get_delta_dist().x * x_conf_sq[i] / total_x_conf_sq;
+      delta_y += wheels[i].get_delta_dist().y * y_conf_sq[i] / total_y_conf_sq;
     }
     
     x_dist += delta_x;
@@ -258,6 +259,39 @@ class PathTrace {
     }
     X_Group.update();
   }
+};
+
+
+
+struct BezierCurve {
+
+  xy_pos calPoint(std::vector<xy_pos> points, double t) {
+    xy_pos resultant(0,0);
+    for (int i = 0; i < points.size(); i++){
+      double t_pow = pow(t,i) * pow(1-t,points.size() - (i + 1))
+        * binoCoef(points.size()-1,i);
+      resultant = resultant + points[i].mul(t_pow,t_pow);
+    }
+    return resultant;
+  }
+
+  xy_pos calDeriv(std::vector<xy_pos> points, double t) {
+    xy_pos resultant(0,0);
+    for (int i = 0; i < points.size(); i++){
+      double f1 = pow(t,i);
+      double f2 = pow(1-t,points.size() - (i + 1));
+      double df1 = i * pow(t,i - 1);
+      double df2 = (points.size() - (i + 1)) 
+        * pow(1-t,points.size() - (i + 2));
+
+      double t_pow = (df1 * f2 + f1 * df2)
+      * binoCoef(points.size(),i+1);
+      resultant = resultant + points[i].mul(t_pow,t_pow);
+    }
+    return resultant;
+  }
+
+
 };
 
 #endif // ODOMETRY_H

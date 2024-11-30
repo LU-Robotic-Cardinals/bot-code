@@ -330,19 +330,6 @@ std::vector<AngledM> x_motor_constructor(std::vector<vex::motor> motors, int mot
     if (motors_per_axle == 1)
       axle +=1;
     axle += i % motors_per_axle; // Increment the axel val after using it
-
-
-    // {motor(PORT19, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius, -1,  1}, // NW Top
-    // {motor(PORT20, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  -45-motor_reference, bot_radius,  1, -1}, // NW Dow
-
-    // {motor(PORT2,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius,  1,  1}, // NE Top
-    // {motor(PORT1,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,   45-motor_reference, bot_radius, -1, -1}, // NE Dow
-
-    // {motor(PORT11, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius, -1,  1}, //SE Top
-    // {motor(PORT12, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size,  135-motor_reference, bot_radius,  1, -1}  //SE Dow
-
-    // {motor(PORT10, ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius,  1,  1}, // SW Top
-    // {motor(PORT9,  ratio18_1, false), motor_speed, wheel_speed, wheel_rad_size, -135-motor_reference, bot_radius, -1, -1}, // SW Dow
   }
   return initialMotors;
 }

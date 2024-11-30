@@ -32,6 +32,9 @@
 // 1. Already have translate for adding to or subtracting from the values
 // Need transform for multiply/divide
 // 2. As a goal, all functions should be non-destructive.
+// 3. n-dimentional vector
+// 4. rename from _pos to _vec
+// 5. determinants, cross product,  for cartesian vecs
 
 
 
@@ -162,12 +165,12 @@ public:
 xy_pos xy_pos::add(double delta_x, double delta_y) {
   double new_x = x + delta_x;
   double new_y = y + delta_y;
-  return xy_pos(x,y);
+  return xy_pos(new_x,new_y);
 }
 xy_pos xy_pos::mul(double coef_x, double coef_y) {
   double new_x = x * coef_x;
   double new_y = y * coef_y;
-  return xy_pos(x,y);
+  return xy_pos(new_x,new_y);
 }
 
 

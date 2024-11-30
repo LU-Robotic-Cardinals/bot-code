@@ -7,6 +7,20 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
+int binoCoef(int n, int k) {
+      
+    // k can not be grater then k so we return 0 here
+    if (k > n)
+        return 0;
+  
+      // base condition when k and n are equal or k = 0
+    if (k == 0 || k == n)
+        return 1;
+
+    // Recurvie add the value 
+    return binoCoef(n - 1, k - 1)
+           + binoCoef(n - 1, k);
+}
 
 bool closetonum(double value = 0, double target = 0, double error = 0.001) {
     if (fabs(value - target) < fabs(error)) {

@@ -63,18 +63,28 @@ int main() {
   OdomWheels odom(wheels);
 
   PathTrace tracer(X_Group,odom,Inertial);
+
+  std::vector<xy_pos> points = {xy_pos(10,10), xy_pos(650,500), xy_pos(650,-500), xy_pos(10,400),xy_pos(10,300),xy_pos(10,50)};
+  BezierCurve bc;
   
   while (true) {
-    polar_pos drive_vector = xy_pos(Controller1.Axis3.position(),-Controller1.Axis4.position()).convert_to_polar().add(0,Inertial.rotation());
-    double spin = - Controller1.Axis1.position();
-    X_Group.set_lin_speed(drive_vector.r/100.0 * X_Group.get_max_lin_speed(drive_vector.theta));
-    X_Group.set_steeringAngle(drive_vector.theta);
-    X_Group.set_rot_speed(spin/100.0 * X_Group.get_max_rot_speed());
+    std::cout << '\n';
+    for (double i = 0; i < 1; i += 0.001){
+      xy_pos dpoint = bc.calPoint(points,i);
+      Brain.Screen.setFillColor("#110088");
+      Brain.Screen.setPenColor("#110088");
+      Brain.Screen.drawRectangle(dpoint.x,  dpoint.y,10,10);
+    }
+    // polar_pos drive_vector = xy_pos(Controller1.Axis3.position(),-Controller1.Axis4.position()).convert_to_polar().add(0,Inertial.rotation());
+    // double spin = - Controller1.Axis1.position();
+    // X_Group.set_lin_speed(drive_vector.r/100.0 * X_Group.get_max_lin_speed(drive_vector.theta));
+    // X_Group.set_steeringAngle(drive_vector.theta);
+    // X_Group.set_rot_speed(spin/100.0 * X_Group.get_max_rot_speed());
 
     // X_Group.update();
 
     // tracer.update();
 
-    wait(10,msec);
+    wait(1000,msec);
   }
 }
