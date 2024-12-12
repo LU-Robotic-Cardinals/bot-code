@@ -78,9 +78,60 @@ class ToggleB {
 };
 
 
-class SingleB {
+class ExclusiveB {
   public:
-  // Simple toggle button stuct
+  // Set of exclusive toggle buttons
+  // only one can be active, toggling one decativates all others
+  // toggling an active deactivates all others too
+  // run setval and update on each loop
+  std::vector<ToggleB> button_list;
+
+  ExclusiveB(int num_buttons){
+    for (int i = 0; i < num_buttons; i++){
+      ToggleB new_button;
+      button_list.push_back(new_button);
+    }
+  }
+  
+  bool update(int button_index, bool button_val) {
+    bool old_output = button_list[button_index].getValue();
+    bool output;
+    output = button_list[button_index].update(button_val);
+    // Itterate through all the buttons
+    if (old_output != output)
+    for (int i = 0; i < button_list.size(); i++){
+      // If the button is not the one we just changed
+      // then set it to false as per the rules above.
+      if (i != button_index)
+        button_list[i].setValue(false);
+    }
+    return output;
+  }
+
+  bool getValue(int button_index) {
+    return button_list[button_index].getValue();
+  }
+
+  // Fix later? Do I want setting a button to false to set
+  // all to false or not affect any other ones?
+  bool setValue(int button_index, bool setVal) {
+    bool output;
+    output = button_list[button_index].setValue(setVal);
+    // Itterate through all the buttons
+    for (int i = 0; i < button_list.size(); i++){
+      // If the button is not the one we just changed
+      // then set it to false as per the rules above.
+      if (i != button_index)
+        button_list[i].setValue(false);
+    }
+    return output;
+  }
+};
+
+
+class PulseB {
+  public:
+  // Simple pulse button stuct
   // run setval and update each loop
   bool output = false;
   bool lastUpdatePressed = false;

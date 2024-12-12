@@ -29,10 +29,10 @@ private:
   timer Time; // Time object
   double last_time = Time.time(); // Last time value
 
-  double x_pos = 0; // Current position in x-axis
-  double y_pos = 0; // Current position in y-axis
   double x_delta = 0; // Change in x since in last update
   double y_delta = 0; // Change in y since in last update
+  double x_pos = 0; // Current position in x-axis
+  double y_pos = 0; // Current position in y-axis
 
   double x_confidence = 0;
   double y_confidence = 0;
@@ -45,8 +45,73 @@ public:
   Encoder(encoder_obj), Inertial(inertial_obj), wheel_radius(wheel_radius_size),
   wheel_angle(wheel_center_angle), offset_radius(wheel_offset_radius), offset_angle(wheel_offset_theta) {}
 
-  
   void update() {
+    // It is assumed that this update function is called sufficiently
+    // often so that the math works correctly. IMO, at least 30 Hz
+    // depending on anticiated bot speed
+
+    // Current bot rotation
+    double current_rot = Inertial.rotation(); // In degrees
+    // Delta rotations of bot since last update
+    double delta_rot = current_rot - last_rot; // In degrees
+    // Average facing direction of bot since last update
+    // Since update delay is non-zero, the bot spans an angle
+    // from last update time. This value is prefered over
+    // current_rot for all direction-based calculations
+    double avg_rot = (current_rot + last_rot)/2; // In degrees
+
+    double current_encoder = Encoder.position(degrees);
+    // Change in encoder position, in rotations
+    double delta_encoder = (current_encoder - last_encoder) / 360.0;
+    
+    // Change in distance detected by encoder
+    // Using wheel circumfrence and delta encoder
+    double delta_dist = delta_encoder * 2.0 * M_PI * wheel_radius;
+
+    // Vector discribing the change in location of the center of the bot
+    // "center" is defined as the location the wheen is in reference to
+    // Both of these vectors are relative to the "world" and not the bot
+    xy_vec delta_vec = (  polar_vec(delta_dist,wheel_angle + avg_rot) + (  polar_vec(offset_radius,current_rot) - polar_vec(offset_radius,last_rot)  )  ).to_xy();
+    xy_vec confidence_vec = polar_vec(1,wheel_angle + avg_rot).to_xy();
+
+    // "Confidence" essentially means accuracy. At certain angles,
+    // the odom wheel might be nearly aligned with an axis but not quite.
+    // It will still predict a motion in the axis it is not aligned with,
+    // but this value can have a tremendous ammount of error in it, since
+    // friction might not be able to overcome rotational friction on the axle.
+    x_confidence = fabs(confidence_vec.x);
+    y_confidence = fabs(confidence_vec.y);
+
+    // Vector decomposition along cartesian axies
+    // These values should be accompanied by their respective
+    // confidence values for acurate odometry.
+    x_delta = delta_vec.x;
+    y_delta = delta_vec.y;
+    
+    // Calculate new dist
+    // These values should not be trusted
+    // Might remove them in the future but no need at the moment
+    // x_pos += x_delta;
+    // y_pos += y_delta;
+
+    // If purely spinning and not moving in any direction,
+    // the following code will try to predict the correct distance from
+    // center of rotation given angles are correct. 
+    // This should be made into a standalone function for use elsewhere in the code.
+
+    // Not finished, need to account for the wheel being at an angle relative to bot
+    // with angle_coef
+    // double calculated_radius = (delta_encoder / angle_coef * wheel_circumference) / ( (delta_rot/360.0) * 2 * M_PI);
+    // d / rot = r
+    // double calculated_radius = (delta_encoder * 360.0 * 4 * wheel_radius) / (delta_rot * angle_coef);
+    // std::cout << calculated_radius << "\n";
+
+    last_encoder = current_encoder;
+    last_rot = current_rot;
+  };
+
+  
+  void update_old() {
     // It is assumed that this update function is called sufficiently
     // often so that the math works correctly. IMO, at least 30 Hz
     // depending on anticiated bot speed
@@ -114,32 +179,17 @@ public:
 
     // Not finished, need to account for the wheel being at an angle relative to bot
     // with angle_coef
-    // double calculated_radius = (de / (360.0 * angle_coef) * wheel_circumference) / ( (dr/360.0) * 2 * M_PI);
-
-
-    // Troubleshooting stuffs
-    // std::cout << "x_pos: " << x_pos << "\ny_pos: " << y_pos << "\n";
-    // std::cout << "dr: " << dr/360.0 << "\n";
-    // std::cout << "de: " << de/360.0 << "\n";
-    // std::cout << "Angle: " << current_rot << "\n";
-    // std::cout << "Angle x: " << x_confidence << "\n";
-    // std::cout << "Angle y: " << y_confidence << "\n";
-    
-    // std::cout << "Angle: " << offset_angle << "\n";
-    // std::cout << "Wrong: " << wrong_rots_from_spinning << "\n";
-    // std::cout << "Error: " << (de/360.0) + wrong_rots_from_spinning << "\n";
-    // std::cout << "Atan:" << (atan2(wheel_y_offset,wheel_x_offset)/M_PI*180.0) << "\n";
-    // std::cout << wheel_angle << "\n";
-    // std::cout << calculated_radius << "\n";
-    // std::cout << angle_coef << "\n";
-
-
+    double calculated_radius = (delta_encoder / angle_coef * wheel_circumference) / ( (delta_rot/360.0) * 2 * M_PI);
+    // d / rot = r
+    // double calculated_radius = (delta_encoder * 360.0 * 4 * wheel_radius) / (delta_rot * angle_coef);
+    std::cout << calculated_radius << "\n";
 
     // last_time = current_time;
     last_encoder = current_encoder;
     last_rot = current_rot;
   };
 
+  
   xy_vec get_delta_dist() {
     return xy_vec(x_delta,y_delta);
   };
@@ -207,6 +257,8 @@ public:
     
     x_dist += delta_x;
     y_dist += delta_y;
+
+    // std::cout << x_dist << "\n";
     
     // std::cout << "\n\n\n";
     // std::cout << "Total x: " << total_x_conf_sq << "\nTotal y: " << total_y_conf_sq << "\n";
@@ -220,17 +272,109 @@ public:
 
 
 
+struct BezierCurve {
+private:
+  std::vector<xy_vec> points = {xy_vec(0,0)};
+public:
+
+  void setPoints(std::vector<xy_vec> bPoints) {
+    points = bPoints;
+  }
+
+  xy_vec calPoint(double t) {
+    xy_vec resultant(0,0);
+    for (int i = 0; i < points.size(); i++){
+      double t_pow = pow(t,i) * pow(1-t,points.size() - (i + 1))
+        * binoCoef(points.size()-1,i);
+      resultant = resultant + points[i].mul(t_pow,t_pow);
+    }
+    return resultant;
+  }
+
+  xy_vec calDer(double t) {
+    xy_vec resultant(0,0);
+    for (int i = 0; i < points.size(); i++){
+      double f1 = pow(t,i);
+      double f2 = pow(1-t,points.size() - (i + 1));
+      double df1 = i * pow(t,i - 1);
+      double df2 = (points.size() - (i + 1)) 
+        * pow(1-t,points.size() - (i + 2));
+
+      double t_pow = (df1 * f2 + f1 * df2)
+      * binoCoef(points.size(),i+1);
+      resultant = resultant + points[i].mul(t_pow,t_pow);
+    }
+    return resultant;
+  }
+
+
+};
+
+
+
 class PathTrace {
   private:
     // std::vector<std::vector<int>> positions = {{0,8},{0,16},{0,0}};
+    // std::vector<xy_vec> positions = {xy_vec(0,0),xy_vec(0,16)};
+    OdomWheels Odom_Obj;
+    X_Drive X_Group;
+    DelayTimer pos_delay;
+    inertial Inertial;
+    BezierCurve curve;
+    double t = 0;
+  public:
+  PathTrace(X_Drive X_Drive_Group, OdomWheels Odom, inertial Inertial_Sensor) : X_Group(X_Drive_Group), Odom_Obj(Odom), Inertial(Inertial_Sensor) {}
+
+  void setCurve(BezierCurve new_curve) {
+    curve = new_curve;
+  }
+  bool update()
+  { 
+    X_Group.set_rot_speed(0);
+    X_Group.set_lin_speed(0);
+    X_Group.set_steeringAngle(0);
+    Odom_Obj.update();
+    double tolerence = 1;
+    double new_t = 0;
+    xy_vec cur_pos = xy_vec(Odom_Obj.get_dist().x,Odom_Obj.get_dist().y);
+    
+    for (new_t = t; (curve.calPoint(new_t) - cur_pos).to_polar().r < tolerence && (t < 1); new_t += 0.0001) { t = new_t; }
+    
+    // The amount of math that this new library takes care of is incredible
+    polar_vec drive_vector = (curve.calPoint(t) - cur_pos).to_polar().add(0,Inertial.rotation()).mul(1/10.0,1);
+    
+    if (fabs(drive_vector.r) > 0.2)
+      drive_vector.r = 0.2;
+
+    X_Group.set_lin_speed(drive_vector.r * X_Group.get_max_lin_speed(drive_vector.theta));
+    X_Group.set_steeringAngle(drive_vector.theta);
+
+    X_Group.update();
+
+    return (drive_vector.r < 0.01);
+  }
+};
+
+
+
+
+
+
+
+
+
+
+class PathTraceV2 {
+  private:
     std::vector<xy_vec> positions = {xy_vec(0,0),xy_vec(0,16)};
+    BezierCurve curve;
     OdomWheels Odom_Obj;
     X_Drive X_Group;
     DelayTimer pos_delay;
     inertial Inertial;
     int index = 0;
   public:
-  PathTrace(X_Drive X_Drive_Group, OdomWheels Odom, inertial Inertial_Sensor) : X_Group(X_Drive_Group), Odom_Obj(Odom), Inertial(Inertial_Sensor) {}
+  PathTraceV2(X_Drive X_Drive_Group, OdomWheels Odom, inertial Inertial_Sensor) : X_Group(X_Drive_Group), Odom_Obj(Odom), Inertial(Inertial_Sensor) {}
   void update()
   { 
     Odom_Obj.update();
@@ -238,7 +382,7 @@ class PathTrace {
 
       // The amount of math that this new library takes care of is incredible
       polar_vec drive_vector = xy_vec(positions[index].x - Odom_Obj.get_dist().x,positions[index].y - Odom_Obj.get_dist().y)
-      .convert_to_polar().add(0,Inertial.rotation()).mul(1/10.0,1);
+      .to_polar().add(0,Inertial.rotation()).mul(1/10.0,1);
       
       if (fabs(drive_vector.r) > 0.2)
         drive_vector.r = 0.2;
@@ -263,35 +407,5 @@ class PathTrace {
 
 
 
-struct BezierCurve {
-
-  xy_vec calPoint(std::vector<xy_vec> points, double t) {
-    xy_vec resultant(0,0);
-    for (int i = 0; i < points.size(); i++){
-      double t_pow = pow(t,i) * pow(1-t,points.size() - (i + 1))
-        * binoCoef(points.size()-1,i);
-      resultant = resultant + points[i].mul(t_pow,t_pow);
-    }
-    return resultant;
-  }
-
-  xy_vec calDeriv(std::vector<xy_vec> points, double t) {
-    xy_vec resultant(0,0);
-    for (int i = 0; i < points.size(); i++){
-      double f1 = pow(t,i);
-      double f2 = pow(1-t,points.size() - (i + 1));
-      double df1 = i * pow(t,i - 1);
-      double df2 = (points.size() - (i + 1)) 
-        * pow(1-t,points.size() - (i + 2));
-
-      double t_pow = (df1 * f2 + f1 * df2)
-      * binoCoef(points.size(),i+1);
-      resultant = resultant + points[i].mul(t_pow,t_pow);
-    }
-    return resultant;
-  }
-
-
-};
 
 #endif // ODOMETRY_H
