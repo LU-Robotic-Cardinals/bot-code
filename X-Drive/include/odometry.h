@@ -25,17 +25,12 @@ private:
 
   vex::inertial Inertial;
   double last_rot = Inertial.rotation(); // Last rotation value in degrees
-  
-  timer Time; // Time object
-  double last_time = Time.time(); // Last time value
 
   double x_delta = 0; // Change in x since in last update
   double y_delta = 0; // Change in y since in last update
-  double x_pos = 0; // Current position in x-axis
-  double y_pos = 0; // Current position in y-axis
 
-  double x_confidence = 0;
-  double y_confidence = 0;
+  double x_confidence = 0; // Confidence in delta in x direction, 0 to 1
+  double y_confidence = 0; // Confidence in delta in y direction, 0 to 1
 
 public:
 
@@ -87,12 +82,6 @@ public:
     // confidence values for acurate odometry.
     x_delta = delta_vec.x;
     y_delta = delta_vec.y;
-    
-    // Calculate new dist
-    // These values should not be trusted
-    // Might remove them in the future but no need at the moment
-    // x_pos += x_delta;
-    // y_pos += y_delta;
 
     // If purely spinning and not moving in any direction,
     // the following code will try to predict the correct distance from
@@ -109,86 +98,6 @@ public:
     last_encoder = current_encoder;
     last_rot = current_rot;
   };
-
-  
-  void update_old() {
-    // It is assumed that this update function is called sufficiently
-    // often so that the math works correctly. IMO, at least 30 Hz
-    // depending on anticiated bot speed
-
-
-    // double current_time = Time.time();
-    // double dt = current_time - last_time;
-
-    // Current bot rotation
-    double current_rot = Inertial.rotation(); // In degrees
-    // Delta rotations of bot since last update
-    double delta_rot = current_rot - last_rot; // In degrees
-    // Average facing direction of bot since last update
-    // Since update delay is non-zero, the bot spans an angle
-    // from last update time. This value is prefered over
-    // current_rot for all direction-based calculations
-    double avg_rot = (current_rot + last_rot)/2; // In degrees
-
-    double current_encoder = Encoder.position(degrees);
-    // Change in encoder position, in rotations
-    double delta_encoder = (current_encoder - last_encoder) / 360.0;
-
-    // Circumference of the encoder wheel, in inches
-    double wheel_circumference = 2.0 * M_PI * wheel_radius;
-
-    // Length of the path that the encoder wheel traced out, in inches
-    double path_circumference = offset_radius * (delta_rot / 360) * 2 * M_PI;
-
-    // std::cout << (offset_angle) << "\n";
-
-    // Percentage of path_circumference that the encoder will incur, -1 to 1
-    double angle_coef = cos(  (wheel_angle  +  90.0  -  offset_angle)   / 180.0*M_PI);
-
-    // The number of incorrect rotations the encoder incurred since last update
-    // due to the bot spinning
-    double wrong_rots_from_spinning = - (path_circumference * angle_coef) / wheel_circumference;
-    
-    // Change in distance detected by encoder
-    double delta_dist = (delta_encoder - wrong_rots_from_spinning) * wheel_circumference;
-
-    // "Confidence" essentially means accuracy. At certain angles,
-    // the odom wheel might be nearly aligned with an axis but not quite.
-    // It will still predict a motion in the axis it is not aligned with,
-    // but this value can have a tremendous ammount of error in it, since
-    // friction might not be able to overcome rotational friction on the axle.
-    x_confidence = fabs(cos((avg_rot + wheel_angle)/180 * M_PI));
-    y_confidence = fabs(sin((avg_rot + wheel_angle) /180 * M_PI));
-
-    // Vector decomposition along cartesian axies
-    // These values should be accompanied by their respective
-    // confidence values for acurate odometry.
-    x_delta = - cos((avg_rot + wheel_angle) /180 * M_PI) * delta_dist;
-    y_delta = sin((avg_rot + wheel_angle) /180 * M_PI) * delta_dist;
-    
-    // Calculate new dist
-    // These values should not be trusted
-    // Might remove them in the future but no need at the moment
-    x_pos += x_delta;
-    y_pos += y_delta;
-
-    // If purely spinning and not moving in any direction,
-    // the following code will try to predict the correct distance from
-    // center of rotation given angles are correct. 
-    // This should be made into a standalone function for use elsewhere in the code.
-
-    // Not finished, need to account for the wheel being at an angle relative to bot
-    // with angle_coef
-    double calculated_radius = (delta_encoder / angle_coef * wheel_circumference) / ( (delta_rot/360.0) * 2 * M_PI);
-    // d / rot = r
-    // double calculated_radius = (delta_encoder * 360.0 * 4 * wheel_radius) / (delta_rot * angle_coef);
-    std::cout << calculated_radius << "\n";
-
-    // last_time = current_time;
-    last_encoder = current_encoder;
-    last_rot = current_rot;
-  };
-
   
   xy_vec get_delta_dist() {
     return xy_vec(x_delta,y_delta);
@@ -265,9 +174,16 @@ public:
     // std::cout << "X: " << x_dist << "\nY:" << y_dist << "\n\n\n"; 
   }
 
-  xy_vec get_dist(){
+  xy_vec get_pos(){
     return xy_vec(x_dist,y_dist);
   }
+
+  xy_vec set_pos(xy_vec pos){
+    x_dist = pos.x;
+    y_dist = pos.y;
+    return xy_vec(x_dist,y_dist);
+  }
+
 };
 
 
@@ -309,103 +225,5 @@ public:
 
 
 };
-
-
-
-class PathTrace {
-  private:
-    // std::vector<std::vector<int>> positions = {{0,8},{0,16},{0,0}};
-    // std::vector<xy_vec> positions = {xy_vec(0,0),xy_vec(0,16)};
-    OdomWheels Odom_Obj;
-    X_Drive X_Group;
-    DelayTimer pos_delay;
-    inertial Inertial;
-    BezierCurve curve;
-    double t = 0;
-  public:
-  PathTrace(X_Drive X_Drive_Group, OdomWheels Odom, inertial Inertial_Sensor) : X_Group(X_Drive_Group), Odom_Obj(Odom), Inertial(Inertial_Sensor) {}
-
-  void setCurve(BezierCurve new_curve) {
-    curve = new_curve;
-  }
-  bool update()
-  { 
-    X_Group.set_rot_speed(0);
-    X_Group.set_lin_speed(0);
-    X_Group.set_steeringAngle(0);
-    Odom_Obj.update();
-    double tolerence = 1;
-    double new_t = 0;
-    xy_vec cur_pos = xy_vec(Odom_Obj.get_dist().x,Odom_Obj.get_dist().y);
-    
-    for (new_t = t; (curve.calPoint(new_t) - cur_pos).to_polar().r < tolerence && (t < 1); new_t += 0.0001) { t = new_t; }
-    
-    // The amount of math that this new library takes care of is incredible
-    polar_vec drive_vector = (curve.calPoint(t) - cur_pos).to_polar().add(0,Inertial.rotation()).mul(1/10.0,1);
-    
-    if (fabs(drive_vector.r) > 0.2)
-      drive_vector.r = 0.2;
-
-    X_Group.set_lin_speed(drive_vector.r * X_Group.get_max_lin_speed(drive_vector.theta));
-    X_Group.set_steeringAngle(drive_vector.theta);
-
-    X_Group.update();
-
-    return (drive_vector.r < 0.01);
-  }
-};
-
-
-
-
-
-
-
-
-
-
-class PathTraceV2 {
-  private:
-    std::vector<xy_vec> positions = {xy_vec(0,0),xy_vec(0,16)};
-    BezierCurve curve;
-    OdomWheels Odom_Obj;
-    X_Drive X_Group;
-    DelayTimer pos_delay;
-    inertial Inertial;
-    int index = 0;
-  public:
-  PathTraceV2(X_Drive X_Drive_Group, OdomWheels Odom, inertial Inertial_Sensor) : X_Group(X_Drive_Group), Odom_Obj(Odom), Inertial(Inertial_Sensor) {}
-  void update()
-  { 
-    Odom_Obj.update();
-    if (pos_delay.checkTimer()) {
-
-      // The amount of math that this new library takes care of is incredible
-      polar_vec drive_vector = xy_vec(positions[index].x - Odom_Obj.get_dist().x,positions[index].y - Odom_Obj.get_dist().y)
-      .to_polar().add(0,Inertial.rotation()).mul(1/10.0,1);
-      
-      if (fabs(drive_vector.r) > 0.2)
-        drive_vector.r = 0.2;
-
-      X_Group.set_lin_speed(drive_vector.r * X_Group.get_max_lin_speed(drive_vector.theta));
-      X_Group.set_steeringAngle(drive_vector.theta);
-
-      if (drive_vector.r < 0.1) {
-        pos_delay.startTimer(10);
-        index++;
-        if (index == positions.size())
-          index = 0;
-      }
-    } else {
-      X_Group.set_rot_speed(0);
-      X_Group.set_lin_speed(0);
-      X_Group.set_steeringAngle(0);
-    }
-    X_Group.update();
-  }
-};
-
-
-
 
 #endif // ODOMETRY_H

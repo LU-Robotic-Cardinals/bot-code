@@ -9,6 +9,7 @@
 #include "pidcontroller.h"
 #include "position.h"
 #include "screen.h"
+#include "pathing.h"
 
 // using namespace vex;
 

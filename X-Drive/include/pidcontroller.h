@@ -48,7 +48,7 @@ public:
       double prop = Kp * previous_error;
       double inte = Ki * previous_error * dt;
       double deri = Kd * (previous_error - previous_error) / dt;
-      std::vector<double> array = {prop, inte, deri, previous_error};
+      std::vector<double> array = {previous_error, prop, inte, deri};
       return array;
     }
 
