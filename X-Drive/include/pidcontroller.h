@@ -10,7 +10,7 @@
 
 class PIDController {
 public:
-    PIDController(double P, double I, double D,
+    PIDController(double P = 1, double I = 0, double D = 0,
     double max_p = 0, double max_I = 0, double max_D = 0) : 
     Kp(P), Ki(I), Kd(D),
     Mp(max_p), Mi(max_I), Md(max_D),
@@ -38,17 +38,20 @@ public:
           derivative = fabs(Md) * getSign(derivative);
         }
 
+
+        last_prop = proportional;
+        last_inte = integral;
+        last_deri = derivative;
         previous_error = error;
+        last_dt = dt;
 
         return proportional + integral + derivative;
     }
     
     std::vector<double> values(){
-      double dt = (Time.time() - last_time)/10;
-      double prop = Kp * previous_error;
-      double inte = Ki * previous_error * dt;
-      double deri = Kd * (previous_error - previous_error) / dt;
-      std::vector<double> array = {previous_error, prop, inte, deri};
+      std::vector<double> array = {
+        previous_error, last_prop, last_inte, last_deri};
+        // std::cout << last_deri << "\n\n";
       return array;
     }
 
@@ -58,6 +61,12 @@ private:
     double integral, previous_error;
     double last_time;
     timer Time;
+
+    double last_dt = 1;
+    double last_prop = 0;
+    double last_inte = 0;
+    double last_deri = 0;
+
 };
 
 #endif // PIDCONTROLLER

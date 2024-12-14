@@ -10,6 +10,36 @@ using namespace vex;
 #ifndef ODOMETRY_H
 #define ODOMETRY_H
 
+struct InertialWrapper {
+  public:
+    inertial Inertial_point;
+    // double scaling_factor = -360.0/357.0;
+    double scaling_factor = -1;
+
+    InertialWrapper(inertial Inertial) : Inertial_point(Inertial) {}
+
+    inertial* get_object() {
+      // This is a copy of the object and not the actual one
+      return &Inertial_point;
+    }
+
+    void calibrate() {
+      Inertial_point.calibrate();
+    }
+
+    bool isCalibrating(){
+      return Inertial_point.isCalibrating();
+    }
+
+    double rotation() {
+      return Inertial_point.rotation() * scaling_factor;
+    }
+
+    void setRotation(double value, vex::rotationUnits units) {
+      Inertial_point.setRotation(value, units);
+    }
+};
+
 struct EncoderWheel {
 private:
   vex::rotation Encoder;
@@ -23,8 +53,8 @@ private:
   double offset_angle; // Angle of contact patch from arbitrary "front"
   double offset_radius; // Radius from center of rotation
 
-  vex::inertial Inertial;
-  double last_rot = Inertial.rotation(); // Last rotation value in degrees
+  InertialWrapper* Inertial;
+  double last_rot = Inertial->rotation(); // Last rotation value in degrees
 
   double x_delta = 0; // Change in x since in last update
   double y_delta = 0; // Change in y since in last update
@@ -34,10 +64,10 @@ private:
 
 public:
 
-  EncoderWheel(vex::rotation encoder_obj, vex::inertial inertial_obj, double wheel_radius_size = 1, 
+  EncoderWheel(vex::rotation encoder_obj, InertialWrapper* inertial_pointer, double wheel_radius_size = 1, 
   double wheel_center_angle = 0, double wheel_offset_radius = 0, double wheel_offset_theta = 0): 
   
-  Encoder(encoder_obj), Inertial(inertial_obj), wheel_radius(wheel_radius_size),
+  Encoder(encoder_obj), Inertial(inertial_pointer), wheel_radius(wheel_radius_size),
   wheel_angle(wheel_center_angle), offset_radius(wheel_offset_radius), offset_angle(wheel_offset_theta) {}
 
   void update() {
@@ -46,7 +76,7 @@ public:
     // depending on anticiated bot speed
 
     // Current bot rotation
-    double current_rot = Inertial.rotation(); // In degrees
+    double current_rot = Inertial->rotation(); // In degrees
     // Delta rotations of bot since last update
     double delta_rot = current_rot - last_rot; // In degrees
     // Average facing direction of bot since last update
@@ -77,7 +107,7 @@ public:
     x_confidence = fabs(confidence_vec.x);
     y_confidence = fabs(confidence_vec.y);
 
-    // Vector decomposition along cartesian axies
+    // Vector decomposition along cartesian axies of the field
     // These values should be accompanied by their respective
     // confidence values for acurate odometry.
     x_delta = delta_vec.x;
@@ -113,44 +143,44 @@ public:
 
 class OdomWheels {
 private:
-  std::vector<EncoderWheel> wheels;
+  std::vector<EncoderWheel> tracking_wheels;
   double x_dist = 0;
   double y_dist = 0;
 public:
   OdomWheels(const std::vector<EncoderWheel> initialWheels)
-    : wheels(initialWheels) {}
+    : tracking_wheels(initialWheels) {}
 
   void addWheel(const EncoderWheel wheel) {
-    wheels.push_back(wheel);
+    tracking_wheels.push_back(wheel);
   }
 
   std::vector<EncoderWheel> getWheels() const {
-    return wheels;
+    return tracking_wheels;
   }
 
   void removeWheelByIndex(size_t index) {
-    if (index < wheels.size()) {
-      wheels.erase(wheels.begin() + index);
+    if (index < tracking_wheels.size()) {
+      tracking_wheels.erase(tracking_wheels.begin() + index);
     }
   }
 
   void update() {
-    // std::vector<double> x_dist(wheels.size());
-    // std::vector<double> y_dist(wheels.size());
+    // std::vector<double> x_dist(tracking_wheels.size());
+    // std::vector<double> y_dist(tracking_wheels.size());
 
-    std::vector<double> x_conf_sq(wheels.size());
-    std::vector<double> y_conf_sq(wheels.size());
+    std::vector<double> x_conf_sq(tracking_wheels.size());
+    std::vector<double> y_conf_sq(tracking_wheels.size());
 
     double total_x_conf_sq = 0;
     double total_y_conf_sq = 0;
-    // Itterate through wheels
-    for (size_t i = 0; i < wheels.size(); i++) {
+    // Itterate through tracking_wheels
+    for (size_t i = 0; i < tracking_wheels.size(); i++) {
 
       // Update wheel
-      wheels[i].update();
+      tracking_wheels[i].update();
 
-      x_conf_sq[i] = pow(  fabs(wheels[i].get_delta_confidence().x)  ,2);
-      y_conf_sq[i] = pow(  fabs(wheels[i].get_delta_confidence().y)  ,2);
+      x_conf_sq[i] = pow(  fabs(tracking_wheels[i].get_delta_confidence().x)  ,2);
+      y_conf_sq[i] = pow(  fabs(tracking_wheels[i].get_delta_confidence().y)  ,2);
 
       // Find conf totals
       total_x_conf_sq += x_conf_sq[i];
@@ -159,19 +189,24 @@ public:
 
     double delta_x = 0;
     double delta_y = 0;
-    for (size_t i = 0; i < wheels.size(); i++) {
-      delta_x += wheels[i].get_delta_dist().x * x_conf_sq[i] / total_x_conf_sq;
-      delta_y += wheels[i].get_delta_dist().y * y_conf_sq[i] / total_y_conf_sq;
+    for (size_t i = 0; i < tracking_wheels.size(); i++) {
+      delta_x += tracking_wheels[i].get_delta_dist().x * x_conf_sq[i] / total_x_conf_sq;
+      delta_y += tracking_wheels[i].get_delta_dist().y * y_conf_sq[i] / total_y_conf_sq;
     }
     
     x_dist += delta_x;
     y_dist += delta_y;
 
     // std::cout << x_dist << "\n";
+    // std::cout << y_dist << "\n\n\n\n";
+
+    // std::cout << x_dist << "\n";
     
     // std::cout << "\n\n\n";
     // std::cout << "Total x: " << total_x_conf_sq << "\nTotal y: " << total_y_conf_sq << "\n";
-    // std::cout << "X: " << x_dist << "\nY:" << y_dist << "\n\n\n"; 
+    // std::cout << "X: " << x_dist << "\nY:" << y_dist << "\n\n\n";
+
+    
   }
 
   xy_vec get_pos(){

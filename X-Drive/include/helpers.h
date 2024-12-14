@@ -177,4 +177,25 @@ private:
 };
 
 
+int getRotationDirection(double targetAngle, double gyroAngle) {
+  // Calculate the angle difference, ensuring it's within -180 to 180 degrees
+  float angleDiff = targetAngle - gyroAngle;
+  while (angleDiff > 180.0) {
+    angleDiff -= 360.0;
+  }
+  while (angleDiff <= -180.0) {
+    angleDiff += 360.0;
+  }
+
+  // Determine the rotation direction
+  if (angleDiff > 0.0) {
+    return -1; // Clockwise rotation
+  } else if (angleDiff < 0.0) {
+    return 1; // Counter-Clockwise rotation
+  } else {
+    return 0; // No rotation needed
+  }
+}
+
+
 #endif // HELPERS_H
